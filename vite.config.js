@@ -1,0 +1,33 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { VitePWA } from 'vite-plugin-pwa'
+
+export default defineConfig({
+  plugins: [
+    vue(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['icons/icon.svg'],
+      manifest: {
+        name: 'PR Tracker',
+        short_name: 'PR Tracker',
+        description: 'Track personal records and plan workouts',
+        theme_color: '#15161A',
+        background_color: '#15161A',
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          {
+            src: 'icons/icon.svg',
+            sizes: '512x512',
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,json}']
+      }
+    })
+  ]
+})

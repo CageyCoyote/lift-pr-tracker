@@ -1,23 +1,30 @@
 <script setup>
-import { ref } from 'vue'
-import { useWorkoutPlanStore } from '../stores/workoutPlan'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useWorkoutsStore } from '../stores/workouts'
 import { useExercisesStore } from '../stores/exercises'
 import { useRecordsStore } from '../stores/records'
 import { usePeopleStore } from '../stores/people'
 import ExercisePicker from '../components/ExercisePicker.vue'
 import PRForm from '../components/PRForm.vue'
 
-const planStore = useWorkoutPlanStore()
+const route = useRoute()
+const router = useRouter()
+const workoutsStore = useWorkoutsStore()
 const exercisesStore = useExercisesStore()
 const recordsStore = useRecordsStore()
 const peopleStore = usePeopleStore()
 
+const workout = computed(() => workoutsStore.getWorkout(route.params.id))
+
 const pickerOpen = ref(false)
 const formOpen = ref(false)
 const logExercise = ref(null)
+const renaming = ref(false)
+const titleDraft = ref('')
 
 function addExercise(ex) {
-  planStore.addExercise(ex)
+  workoutsStore.addExercise(workout.value.id, ex)
   pickerOpen.value = false
 }
 
@@ -34,21 +41,49 @@ function openLog(item) {
 function handleSaved(payload) {
   recordsStore.addEntry({ personId: peopleStore.activePersonId, ...payload })
 }
+
+function startRename() {
+  titleDraft.value = workout.value.title
+  renaming.value = true
+}
+
+function saveRename() {
+  workoutsStore.renameWorkout(workout.value.id, titleDraft.value)
+  renaming.value = false
+}
+
+function deleteWorkout() {
+  if (confirm(`Delete "${workout.value.title}"? This can't be undone.`)) {
+    workoutsStore.removeWorkout(workout.value.id)
+    router.push('/plan')
+  }
+}
 </script>
 
 <template>
-  <div class="page">
+  <div v-if="!workout" class="page">
+    <p class="empty-state">Workout not found.</p>
+    <router-link to="/plan" class="btn">Back to Workouts</router-link>
+  </div>
+
+  <div v-else class="page">
+    <router-link to="/plan" class="back-link">← Workouts</router-link>
+
     <header class="page-header">
-      <span class="eyebrow">Today's Session</span>
-      <h1>Plan Workout</h1>
+      <span class="eyebrow">Session</span>
+      <form v-if="renaming" class="rename-form" @submit.prevent="saveRename">
+        <input v-model="titleDraft" type="text" autofocus />
+        <button type="submit" class="btn btn-accent">Save</button>
+      </form>
+      <h1 v-else class="title-row" @click="startRename">{{ workout.title }}</h1>
     </header>
 
-    <div v-if="planStore.items.length === 0" class="empty-state">
-      Your workout list is empty. Add exercises below to plan today's session.
+    <div v-if="workout.items.length === 0" class="empty-state">
+      This workout is empty. Add exercises below.
     </div>
 
     <ul v-else class="plan-list">
-      <li v-for="(item, idx) in planStore.items" :key="item.id" class="plan-row">
+      <li v-for="(item, idx) in workout.items" :key="item.id" class="plan-row">
         <div class="plan-info">
           <span class="plan-index">{{ idx + 1 }}</span>
           <div class="plan-text">
@@ -60,19 +95,15 @@ function handleSaved(payload) {
           </div>
         </div>
         <div class="plan-actions">
-          <button class="icon-btn" :disabled="idx === 0" @click="planStore.moveUp(item.id)" aria-label="Move up">↑</button>
+          <button class="icon-btn" :disabled="idx === 0" @click="workoutsStore.moveUp(workout.id, item.id)" aria-label="Move up">↑</button>
           <button
             class="icon-btn"
-            :disabled="idx === planStore.items.length - 1"
-            @click="planStore.moveDown(item.id)"
+            :disabled="idx === workout.items.length - 1"
+            @click="workoutsStore.moveDown(workout.id, item.id)"
             aria-label="Move down"
           >↓</button>
-          <button
-            v-if="peopleStore.activePersonId"
-            class="btn log-btn"
-            @click="openLog(item)"
-          >Log</button>
-          <button class="icon-btn danger" @click="planStore.removeItem(item.id)" aria-label="Remove">×</button>
+          <button v-if="peopleStore.activePersonId" class="btn log-btn" @click="openLog(item)">Log</button>
+          <button class="icon-btn danger" @click="workoutsStore.removeItem(workout.id, item.id)" aria-label="Remove">×</button>
         </div>
       </li>
     </ul>
@@ -81,9 +112,7 @@ function handleSaved(payload) {
       <button class="btn btn-accent" @click="pickerOpen = !pickerOpen">
         {{ pickerOpen ? 'Close picker' : '+ Add exercise' }}
       </button>
-      <button v-if="planStore.items.length" class="btn btn-danger" @click="planStore.clear()">
-        Clear list
-      </button>
+      <button class="btn btn-danger" @click="deleteWorkout">Delete workout</button>
     </div>
 
     <div v-if="pickerOpen" class="picker-panel">
@@ -95,6 +124,14 @@ function handleSaved(payload) {
 </template>
 
 <style scoped>
+.back-link {
+  display: inline-block;
+  color: var(--color-text-dim);
+  text-decoration: none;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
 .page-header {
   margin-bottom: 16px;
 }
@@ -102,6 +139,23 @@ function handleSaved(payload) {
 .page-header h1 {
   font-size: 28px;
   margin-top: 2px;
+}
+
+.title-row {
+  cursor: pointer;
+}
+
+.rename-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.rename-form input {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: 20px;
+  text-transform: uppercase;
 }
 
 .empty-state {

@@ -1,14 +1,28 @@
 <script setup>
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
 const tabs = [
   { to: '/', label: 'Records' },
   { to: '/plan', label: 'Plan' },
   { to: '/people', label: 'People' }
 ]
+
+function isActive(to) {
+  return to === '/' ? route.path === '/' : route.path.startsWith(to)
+}
 </script>
 
 <template>
   <nav class="app-nav">
-    <router-link v-for="t in tabs" :key="t.to" :to="t.to" class="nav-item" active-class="active">
+    <router-link
+      v-for="t in tabs"
+      :key="t.to"
+      :to="t.to"
+      class="nav-item"
+      :class="{ active: isActive(t.to) }"
+    >
       <span class="nav-mark" />
       <span class="nav-label">{{ t.label }}</span>
     </router-link>

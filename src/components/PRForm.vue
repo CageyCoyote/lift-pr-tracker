@@ -39,11 +39,16 @@ function close() {
 }
 
 function save() {
-  if (!weight.value || !exercise.value) return
+  if (!exercise.value) return
+  if (unit.value === 'bodyweight') {
+    if (!reps.value) return
+  } else if (!weight.value) {
+    return
+  }
   emit('saved', {
     exerciseId: exercise.value.id,
     exerciseName: exercise.value.name,
-    weight: weight.value,
+    weight: unit.value === 'bodyweight' ? 0 : weight.value,
     reps: reps.value || 1,
     unit: unit.value,
     date: date.value
@@ -66,16 +71,33 @@ function save() {
         <label class="field">
           <span class="eyebrow">Weight</span>
           <div class="weight-row">
-            <input v-model="weight" type="number" min="0" step="0.5" required autofocus />
+            <input
+              v-if="unit !== 'bodyweight'"
+              v-model="weight"
+              type="number"
+              min="0"
+              step="0.5"
+              required
+              autofocus
+            />
+            <span v-else class="bodyweight-note">Tracked by reps, no added weight</span>
             <select v-model="unit">
               <option value="lb">lb</option>
               <option value="kg">kg</option>
+              <option value="bodyweight">Bodyweight</option>
             </select>
           </div>
         </label>
         <label class="field">
           <span class="eyebrow">Reps</span>
-          <input v-model="reps" type="number" min="1" step="1" placeholder="1" />
+          <input
+            v-model="reps"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="1"
+            :required="unit === 'bodyweight'"
+          />
         </label>
         <label class="field">
           <span class="eyebrow">Date</span>
@@ -155,6 +177,15 @@ function save() {
 
 .weight-row input {
   flex: 1;
+}
+
+.bodyweight-note {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--color-text-dim);
+  font-style: italic;
 }
 
 .weight-row select {

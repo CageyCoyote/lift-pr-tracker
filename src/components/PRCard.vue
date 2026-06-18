@@ -24,17 +24,28 @@ function remove(id) {
 <template>
   <div class="card">
     <button class="card-top" @click="expanded = !expanded">
-      <PlateBadge :weight="best.weight" :unit="best.unit" />
+      <PlateBadge
+        v-if="best.unit === 'bodyweight'"
+        :weight="best.reps"
+        unit="reps"
+      />
+      <PlateBadge v-else :weight="best.weight" :unit="best.unit" />
       <div class="card-info">
         <span class="card-name">{{ best.exerciseName }}</span>
-        <span class="card-meta">{{ best.reps }} rep{{ best.reps > 1 ? 's' : '' }} · {{ best.date }}</span>
+        <span class="card-meta">
+          <template v-if="best.unit === 'bodyweight'">Bodyweight · {{ best.date }}</template>
+          <template v-else>{{ best.reps }} rep{{ best.reps > 1 ? 's' : '' }} · {{ best.date }}</template>
+        </span>
       </div>
       <span class="chevron" :class="{ open: expanded }">⌄</span>
     </button>
 
     <div v-if="expanded" class="history">
       <div v-for="h in history()" :key="h.id" class="history-row">
-        <span class="history-text">{{ h.weight }}{{ h.unit }} × {{ h.reps }} — {{ h.date }}</span>
+        <span class="history-text">
+          <template v-if="h.unit === 'bodyweight'">{{ h.reps }} reps (bodyweight) — {{ h.date }}</template>
+          <template v-else>{{ h.weight }}{{ h.unit }} × {{ h.reps }} — {{ h.date }}</template>
+        </span>
         <button class="remove-btn" @click="remove(h.id)" aria-label="Delete entry">×</button>
       </div>
     </div>

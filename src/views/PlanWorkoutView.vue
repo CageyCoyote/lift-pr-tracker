@@ -89,8 +89,13 @@ function deleteWorkout() {
           <div class="plan-text">
             <span class="plan-name">{{ item.exerciseName }}</span>
             <span v-if="bestNote(item.exerciseId)" class="plan-best">
-              PR: {{ bestNote(item.exerciseId).weight }}{{ bestNote(item.exerciseId).unit }} ×
-              {{ bestNote(item.exerciseId).reps }}
+              <template v-if="bestNote(item.exerciseId).unit === 'bodyweight'">
+                PR: {{ bestNote(item.exerciseId).reps }} reps (bodyweight)
+              </template>
+              <template v-else>
+                PR: {{ bestNote(item.exerciseId).weight }}{{ bestNote(item.exerciseId).unit }} ×
+                {{ bestNote(item.exerciseId).reps }}
+              </template>
             </span>
           </div>
         </div>

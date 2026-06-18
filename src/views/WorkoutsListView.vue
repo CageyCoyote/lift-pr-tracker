@@ -81,6 +81,7 @@ function open(id) {
   background: none;
   border: none;
   padding: 0;
+  color: inherit;
 }
 
 .add-form {

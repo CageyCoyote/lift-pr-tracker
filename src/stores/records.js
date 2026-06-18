@@ -33,14 +33,20 @@ export const useRecordsStore = defineStore('records', () => {
       .sort((a, b) => b.date.localeCompare(a.date))
   }
 
-  // Best (highest weight, tie broken by reps) entry per exercise for a person
+  // For bodyweight entries the meaningful number is reps (no added weight);
+  // for everything else it's weight, tie-broken by reps.
+  function metric(e) {
+    return e.unit === 'bodyweight' ? e.reps : e.weight
+  }
+
+  // Best entry per exercise for a person (highest metric, tie broken by reps)
   function bestFor(personId, exerciseId) {
     const all = entries.value.filter(
       (e) => e.personId === personId && e.exerciseId === exerciseId
     )
     if (all.length === 0) return null
     return all.reduce((best, e) =>
-      e.weight > best.weight || (e.weight === best.weight && e.reps > best.reps) ? e : best
+      metric(e) > metric(best) || (metric(e) === metric(best) && e.reps > best.reps) ? e : best
     )
   }
 

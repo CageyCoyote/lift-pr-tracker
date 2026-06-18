@@ -22,6 +22,7 @@ const formOpen = ref(false)
 const logExercise = ref(null)
 const renaming = ref(false)
 const titleDraft = ref('')
+const currentPerson = computed(() => peopleStore.getActivePerson())
 
 function addExercise(ex) {
   workoutsStore.addExercise(workout.value.id, ex)
@@ -75,7 +76,9 @@ function deleteWorkout() {
         <input v-model="titleDraft" type="text" autofocus />
         <button type="submit" class="btn btn-accent">Save</button>
       </form>
+
       <h1 v-else class="title-row" @click="startRename">{{ workout.title }}</h1>
+      <span v-if="!renaming && currentPerson" class="subtitle">Recording for {{ currentPerson.name }}</span>
     </header>
 
     <div v-if="workout.items.length === 0" class="empty-state">
@@ -100,15 +103,13 @@ function deleteWorkout() {
           </div>
         </div>
         <div class="plan-actions">
-          <button class="icon-btn" :disabled="idx === 0" @click="workoutsStore.moveUp(workout.id, item.id)" aria-label="Move up">↑</button>
-          <button
-            class="icon-btn"
-            :disabled="idx === workout.items.length - 1"
-            @click="workoutsStore.moveDown(workout.id, item.id)"
-            aria-label="Move down"
-          >↓</button>
+          <button class="icon-btn" :disabled="idx === 0" @click="workoutsStore.moveUp(workout.id, item.id)"
+            aria-label="Move up">↑</button>
+          <button class="icon-btn" :disabled="idx === workout.items.length - 1"
+            @click="workoutsStore.moveDown(workout.id, item.id)" aria-label="Move down">↓</button>
           <button v-if="peopleStore.activePersonId" class="btn log-btn" @click="openLog(item)">Log</button>
-          <button class="icon-btn danger" @click="workoutsStore.removeItem(workout.id, item.id)" aria-label="Remove">×</button>
+          <button class="icon-btn danger" @click="workoutsStore.removeItem(workout.id, item.id)"
+            aria-label="Remove">×</button>
         </div>
       </li>
     </ul>
@@ -139,6 +140,12 @@ function deleteWorkout() {
 
 .page-header {
   margin-bottom: 16px;
+}
+
+.subtitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-dim);
 }
 
 .page-header h1 {
@@ -268,5 +275,24 @@ function deleteWorkout() {
 
 .picker-panel {
   margin-top: 14px;
+}
+
+.chip {
+  flex-shrink: 0;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.chip.active {
+  background: var(--color-accent);
+  color: #1a1500;
+  border-color: var(--color-accent);
 }
 </style>

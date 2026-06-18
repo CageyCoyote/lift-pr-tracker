@@ -29,5 +29,11 @@ export const usePeopleStore = defineStore('people', () => {
     activePersonId.value = id
   }
 
-  return { people, activePersonId, addPerson, removePerson, setActivePerson }
+  function getActivePerson() {
+    if (activePersonId.value == null) { return }
+    let one = people?.value?.filter(p => p?.id === activePersonId?.value)[0]
+    return one
+  }
+
+  return { people, activePersonId, addPerson, removePerson, setActivePerson, getActivePerson }
 })

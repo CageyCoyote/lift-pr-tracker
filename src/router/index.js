@@ -5,7 +5,8 @@ import PlanWorkoutView from '../views/PlanWorkoutView.vue'
 import PeopleView from '../views/PeopleView.vue'
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.VUE_APP_BASE_URL || ''),
+  base: import.meta.env.VUE_APP_BASE_URL || "/",
   routes: [
     { path: '/', name: 'records', component: RecordsView },
     { path: '/plan', name: 'workouts', component: WorkoutsListView },

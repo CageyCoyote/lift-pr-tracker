@@ -16,7 +16,8 @@ export default defineConfig({
         theme_color: '#15161A',
         background_color: '#15161A',
         display: 'standalone',
-        start_url: '/',
+        start_url:  process.env.VUE_APP_BASE_URL || '/',
+        scope:  process.env.VUE_APP_BASE_URL || '/',
         icons: [
           {
             src: 'icons/icon.svg',
@@ -42,7 +43,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,json,svg,png,ico}'],
-        // sourcemap: true
+        sourcemap: true
       }
     })
   ]

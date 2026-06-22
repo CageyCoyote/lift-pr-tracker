@@ -7,6 +7,7 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'inline',
       includeAssets: ['icons/icon.svg'],
       manifest: {
         name: 'PR Tracker',
@@ -21,25 +22,18 @@ export default defineConfig({
             src: 'icons/icon.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'any'
           },
           {
-            src: 'icons/icon.svg',
+            src: 'icons/maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: 'icons/pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-          },
-          {
-            src: 'icons/icon.svg',
-            sizes: '180x180',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-          },
-          {
-            src: 'icons/icon.svg',
-            sizes: '64x64',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            type: 'image/png',
           }
         ]
       },
@@ -47,7 +41,7 @@ export default defineConfig({
         enabled: true
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,json,vue,png}']
+        globPatterns: ['**/*.{js,css,html,json,svg,png,ico}']
       }
     })
   ]

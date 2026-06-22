@@ -9,6 +9,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'inline',
       includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png', 'icons/maskable-icon-512x512.png'],
+      base: process.env.VUE_APP_BASE_URL || '/',
       manifest: {
         name: 'PR Tracker',
         short_name: 'PR Tracker',

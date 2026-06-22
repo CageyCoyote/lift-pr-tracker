@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'inline',
-      includeAssets: ['icons/icon.svg'],
+      includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png', 'icons/maskable-icon-512x512.png'],
       manifest: {
         name: 'PR Tracker',
         short_name: 'PR Tracker',
@@ -41,7 +41,8 @@ export default defineConfig({
         enabled: true
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,json,svg,png,ico}']
+        globPatterns: ['**/*.{js,css,html,json,svg,png,ico}'],
+        // sourcemap: true
       }
     })
   ]

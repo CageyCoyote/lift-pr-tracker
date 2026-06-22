@@ -22,11 +22,20 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'any maskable'
+          },
+          {
+            src: 'icons/icon.svg',
+            sizes: '192x192',
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
           }
         ]
       },
+      devOptions: {
+        enabled: true
+      },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,json}']
+        globPatterns: ['**/*.{js,css,html,svg,json,vue,png}']
       }
     })
   ]

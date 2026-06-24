@@ -11,40 +11,26 @@ const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c14
 
     <div class="card-header">
       <span class="exercise-name">{{ exercise.name }}</span>
-      <span
-        class="level-pip"
-        :style="{ background: levelColor[exercise.level] ?? 'var(--color-border)' }"
-        :title="exercise.level"
-      />
     </div>
 
     <div class="badges">
-      <!-- <span v-if="exercise.equipment" class="equipment">{{ exercise.equipment }}</span> -->
       <span v-if="exercise.equipment" class="badge badge-equipment">{{ exercise.equipment }}</span>
-      <!-- <span class="badge badge-category">{{ exercise.category }}</span> -->
     </div>
 
     <div class="muscle-section">
       <div class="muscle-row">
-        <span
-          v-for="m in exercise.primaryMuscles"
-          :key="m"
-          class="muscle-chip primary"
-        >{{ m }}</span>
+        <span v-for="m in exercise.primaryMuscles" :key="m" class="muscle-chip primary">{{ m }}</span>
       </div>
       <div v-if="exercise.secondaryMuscles?.length" class="muscle-row secondary-row">
-        <span
-          v-for="m in exercise.secondaryMuscles"
-          :key="m"
-          class="muscle-chip secondary"
-        >{{ m }}</span>
+        <span v-for="m in exercise.secondaryMuscles" :key="m" class="muscle-chip secondary">{{ m }}</span>
       </div>
     </div>
 
     <div class="card-footer">
       <span class="mechanic">{{ exercise.category }}</span>
-      <!-- <span class="mechanic">{{ exercise.mechanic ?? '—' }}</span> -->
-      <span class="force-badge" :class="exercise.force">{{ exercise.force }}</span>
+      <span class="level-badge" :style="{ color: levelColor[exercise.level] ?? 'var(--color-text-dim)' }">
+        {{ exercise.level }}
+      </span>
     </div>
 
   </div>
@@ -90,7 +76,7 @@ const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c14
   margin-top: 4px;
 }
 
-/* ── Equipment / Category badges ── */
+/* ── Equipment badge ── */
 .badges {
   display: flex;
   flex-wrap: wrap;
@@ -101,7 +87,7 @@ const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c14
   font-family: var(--font-mono);
   font-size: 10px;
   padding: 2px 7px;
-  border-radius: 999px;
+  border-radius: revert;
   text-transform: capitalize;
   white-space: nowrap;
 }
@@ -109,15 +95,7 @@ const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c14
 .badge-equipment {
   background: var(--color-surface-2);
   border: 1px solid var(--color-border);
-  font-family: var(--font-mono);
   color: var(--color-text-dim);
-  border-radius: revert;
-}
-
-.badge-category {
-  background: transparent;
-  border: 1px solid var(--color-steel);
-  color: var(--color-steel);
 }
 
 /* ── Muscle chips ── */
@@ -175,26 +153,9 @@ const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c14
   text-transform: capitalize;
 }
 
-.force-badge {
+.level-badge {
   font-family: var(--font-mono);
   font-size: 10px;
   text-transform: capitalize;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.force-badge.push {
-  background: color-mix(in srgb, #e05c3a 12%, transparent);
-  color: #e07a5f;
-}
-
-.force-badge.pull {
-  background: color-mix(in srgb, #4a9e6b 12%, transparent);
-  color: #6bbf88;
-}
-
-.force-badge.static {
-  background: color-mix(in srgb, var(--color-text-dim) 12%, transparent);
-  color: var(--color-text-dim);
 }
 </style>

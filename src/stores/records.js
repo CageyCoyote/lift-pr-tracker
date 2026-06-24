@@ -27,6 +27,15 @@ export const useRecordsStore = defineStore('records', () => {
     entries.value = entries.value.filter((e) => e.id !== id)
   }
 
+  function updateEntry(id, { weight, reps, unit, date }) {
+    const entry = entries.value.find((e) => e.id === id)
+    if (!entry) return
+    entry.weight = unit === 'bodyweight' ? 0 : Number(weight)
+    entry.reps = Number(reps) || 1
+    entry.unit = unit
+    entry.date = date
+  }
+
   function historyFor(personId, exerciseId) {
     return entries.value
       .filter((e) => e.personId === personId && e.exerciseId === exerciseId)
@@ -58,5 +67,5 @@ export const useRecordsStore = defineStore('records', () => {
       .sort((a, b) => a.best.exerciseName.localeCompare(b.best.exerciseName))
   }
 
-  return { entries, addEntry, removeEntry, historyFor, bestFor, bestsForPerson }
+  return { entries, addEntry, removeEntry, updateEntry, historyFor, bestFor, bestsForPerson }
 })

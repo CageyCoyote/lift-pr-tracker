@@ -14,8 +14,15 @@ const props = defineProps({
 const recordsStore = useRecordsStore()
 const exercisesStore = useExercisesStore()
 const expanded = ref(false)
+
+// New PR form state
 const formOpen = ref(false)
 const logExercise = ref(null)
+
+// Edit form state
+const editFormOpen = ref(false)
+const editEntry = ref(null)
+const editExercise = ref(null)
 
 function history() {
   return recordsStore.historyFor(props.personId, props.exerciseId)
@@ -25,13 +32,23 @@ function remove(id) {
   recordsStore.removeEntry(id)
 }
 
-function openLog(item) {
+function openLog() {
   logExercise.value = exercisesStore.getById(props.exerciseId)
   formOpen.value = true
 }
 
+function openEdit(entry) {
+  editEntry.value = entry
+  editExercise.value = exercisesStore.getById(props.exerciseId)
+  editFormOpen.value = true
+}
+
 function handleSaved(payload) {
   recordsStore.addEntry({ personId: props.personId, ...payload })
+}
+
+function handleUpdated(payload) {
+  recordsStore.updateEntry(payload.id, payload)
 }
 </script>
 
@@ -52,7 +69,18 @@ function handleSaved(payload) {
 
     <div v-if="expanded" class="history">
       <div class="log-row">
-        <button v-if="props.personId" class="btn log-btn" @click="openLog(best)">+ New PR</button>
+        <button v-if="props.personId" class="btn log-btn" @click="openLog()">+ New PR</button>
+        <button
+          v-if="props.personId && history().length"
+          class="action-btn edit-btn"
+          @click="openEdit(history()[0])"
+          aria-label="Edit most recent entry"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
       </div>
 
       <div v-for="h in history()" :key="h.id" class="history-row">
@@ -60,10 +88,12 @@ function handleSaved(payload) {
           <template v-if="h.unit === 'bodyweight'">{{ h.reps }} reps (bodyweight) — {{ h.date }}</template>
           <template v-else>{{ h.weight }}{{ h.unit }} × {{ h.reps }} — {{ h.date }}</template>
         </span>
-        <button class="remove-btn" @click="remove(h.id)" aria-label="Delete entry">×</button>
+        <button class="action-btn remove-btn" @click="remove(h.id)" aria-label="Delete entry">×</button>
       </div>
     </div>
+
     <PRForm v-model="formOpen" :initial-exercise="logExercise" @saved="handleSaved" />
+    <PRForm v-model="editFormOpen" :initial-exercise="editExercise" :edit-entry="editEntry" @updated="handleUpdated" />
   </div>
 </template>
 
@@ -130,16 +160,35 @@ function handleSaved(payload) {
   color: var(--color-text-dim);
 }
 
-.remove-btn {
+.action-btn {
   background: none;
   border: none;
-  color: var(--color-danger);
-  font-size: 18px;
   line-height: 1;
-  padding: 0 4px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.log-row{
+.edit-btn {
+  color: var(--color-steel);
+}
+
+.edit-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+}
+
+.remove-btn {
+  color: var(--color-danger);
+  font-size: 18px;
+}
+
+.log-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 3px 0 9px 0;
   border-bottom: 1px solid var(--color-border);
 }

@@ -5,9 +5,11 @@ import ExercisePicker from './ExercisePicker.vue'
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   personId: { type: String, default: null },
-  initialExercise: { type: Object, default: null }
+  initialExercise: { type: Object, default: null },
+  // When set, the form is in edit mode — pre-fills fields and emits 'updated' instead of 'saved'
+  editEntry: { type: Object, default: null }
 })
-const emit = defineEmits(['update:modelValue', 'saved'])
+const emit = defineEmits(['update:modelValue', 'saved', 'updated'])
 
 const step = ref('pick')
 const exercise = ref(null)
@@ -16,15 +18,31 @@ const reps = ref('')
 const date = ref(new Date().toISOString().slice(0, 10))
 const unit = ref('lb')
 
+const isEditMode = ref(false)
+
 watch(
   () => props.modelValue,
   (open) => {
     if (open) {
-      exercise.value = props.initialExercise || null
-      step.value = exercise.value ? 'entry' : 'pick'
-      weight.value = ''
-      reps.value = ''
-      date.value = new Date().toISOString().slice(0, 10)
+      if (props.editEntry) {
+        // Edit mode — pre-fill from the entry being edited
+        isEditMode.value = true
+        exercise.value = props.initialExercise || { id: props.editEntry.exerciseId, name: props.editEntry.exerciseName }
+        step.value = 'entry'
+        weight.value = props.editEntry.unit === 'bodyweight' ? '' : props.editEntry.weight
+        reps.value = props.editEntry.reps
+        unit.value = props.editEntry.unit
+        date.value = props.editEntry.date
+      } else {
+        // New entry mode
+        isEditMode.value = false
+        exercise.value = props.initialExercise || null
+        step.value = exercise.value ? 'entry' : 'pick'
+        weight.value = ''
+        reps.value = ''
+        unit.value = 'lb'
+        date.value = new Date().toISOString().slice(0, 10)
+      }
     }
   }
 )
@@ -45,14 +63,25 @@ function save() {
   } else if (!weight.value) {
     return
   }
-  emit('saved', {
-    exerciseId: exercise.value.id,
-    exerciseName: exercise.value.name,
-    weight: unit.value === 'bodyweight' ? 0 : weight.value,
-    reps: reps.value || 1,
-    unit: unit.value,
-    date: date.value
-  })
+
+  if (isEditMode.value) {
+    emit('updated', {
+      id: props.editEntry.id,
+      weight: unit.value === 'bodyweight' ? 0 : weight.value,
+      reps: reps.value || 1,
+      unit: unit.value,
+      date: date.value
+    })
+  } else {
+    emit('saved', {
+      exerciseId: exercise.value.id,
+      exerciseName: exercise.value.name,
+      weight: unit.value === 'bodyweight' ? 0 : weight.value,
+      reps: reps.value || 1,
+      unit: unit.value,
+      date: date.value
+    })
+  }
   close()
 }
 </script>
@@ -61,7 +90,7 @@ function save() {
   <div v-if="modelValue" class="overlay" @click.self="close">
     <div class="sheet">
       <header class="sheet-header">
-        <h3>{{ step === 'pick' ? 'Choose Exercise' : exercise.name }}</h3>
+        <h3>{{ isEditMode ? 'Edit Entry' : step === 'pick' ? 'Choose Exercise' : exercise.name }}</h3>
         <button class="close-btn" @click="close" aria-label="Close">×</button>
       </header>
 
@@ -107,7 +136,7 @@ function save() {
           <button v-if="!initialExercise" type="button" class="btn" @click="step = 'pick'">
             Back
           </button>
-          <button type="submit" class="btn btn-accent">Save PR</button>
+          <button type="submit" class="btn btn-accent">{{ isEditMode ? 'Update Entry' : 'Save PR' }}</button>
         </div>
       </form>
     </div>

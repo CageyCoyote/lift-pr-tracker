@@ -71,7 +71,6 @@ function deleteWorkout() {
     <router-link to="/plan" class="back-link">← Workouts</router-link>
 
     <header class="page-header">
-      <span class="eyebrow">Session</span>
       <form v-if="renaming" class="rename-form" @submit.prevent="saveRename">
         <input v-model="titleDraft" type="text" autofocus />
         <button type="submit" class="btn btn-accent">Save</button>

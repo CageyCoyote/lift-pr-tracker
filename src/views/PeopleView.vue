@@ -14,7 +14,6 @@ function submit() {
 <template>
   <div class="page">
     <header class="page-header">
-      <span class="eyebrow">Lifters</span>
       <h1>People</h1>
     </header>
 

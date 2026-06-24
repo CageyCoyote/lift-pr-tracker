@@ -1,4 +1,6 @@
 <script setup>
+import { useRouter } from 'vue-router'
+const router = useRouter()
 defineProps({
   exercise: { type: Object, required: true }
 })
@@ -7,7 +9,7 @@ const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c14
 </script>
 
 <template>
-  <div class="exercise-card">
+  <div class="exercise-card" role="button" @click="router.push(`/library/${exercise.id}`)">
 
     <div class="card-header">
       <span class="exercise-name">{{ exercise.name }}</span>
@@ -46,6 +48,7 @@ const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c14
   flex-direction: column;
   gap: 10px;
   transition: border-color 0.15s ease;
+  cursor: pointer;
 }
 
 .exercise-card:hover {

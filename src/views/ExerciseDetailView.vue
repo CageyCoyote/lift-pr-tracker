@@ -1,7 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExercisesStore } from '../stores/exercises'
+import { useWorkoutsStore } from '../stores/workouts'
 
 // Base URL for exercise images — update this to wherever your images are hosted
 // const IMAGE_BASE = '/images/exercises/'
@@ -10,6 +11,7 @@ const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/m
 const route = useRoute()
 const router = useRouter()
 const exercisesStore = useExercisesStore()
+const workoutsStore = useWorkoutsStore()
 
 const exercise = computed(() => exercisesStore.getById(route.params.id))
 
@@ -25,6 +27,19 @@ const meta = computed(() => [
   { label: 'Mechanic', value: exercise.value?.mechanic },
   { label: 'Force', value: exercise.value?.force },
 ].map(m => ({ ...m, value: m.value ?? 'None' })))
+
+// Add to workout sheet
+const sheetOpen = ref(false)
+const addedToId = ref(null)
+
+function addToWorkout(workout) {
+  workoutsStore.addExercise(workout.id, exercise.value)
+  addedToId.value = workout.id
+  setTimeout(() => {
+    sheetOpen.value = false
+    addedToId.value = null
+  }, 800)
+}
 </script>
 
 <template>
@@ -44,6 +59,19 @@ const meta = computed(() => [
       <span class="level-badge" :style="{ color: levelColor[exercise.level] ?? 'var(--color-text-dim)' }">{{
         exercise.level }}</span>
     </header>
+
+    <!-- Add to workout -->
+    <div v-if="workoutsStore.workouts.length" class="add-row">
+      <button class="add-subtle" @click="sheetOpen = true">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add to workout
+      </button>
+    </div>
+    <p v-else class="no-workouts-note">
+      <router-link to="/plan">Create a workout</router-link> to add this exercise.
+    </p>
 
     <!-- Metadata grid -->
     <div class="meta-grid">
@@ -91,6 +119,25 @@ const meta = computed(() => [
         </li>
       </ol>
     </section>
+
+    <!-- Workout picker sheet -->
+    <div v-if="sheetOpen" class="overlay" @click.self="sheetOpen = false">
+      <div class="sheet">
+        <header class="sheet-header">
+          <h3>Add to Workout</h3>
+          <button class="close-btn" @click="sheetOpen = false" aria-label="Close">×</button>
+        </header>
+        <ul class="workout-list">
+          <li v-for="w in workoutsStore.workouts" :key="w.id">
+            <button class="workout-row" :class="{ added: addedToId === w.id }" @click="addToWorkout(w)">
+              <span class="workout-row-title">{{ w.title }}</span>
+              <span class="workout-row-count">{{ w.items.length }} exercise{{ w.items.length === 1 ? '' : 's' }}</span>
+              <span v-if="addedToId === w.id" class="added-tick">✓</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -279,5 +326,129 @@ const meta = computed(() => [
   color: var(--color-text-dim);
   font-size: 14px;
   margin-bottom: 16px;
+}
+
+/* ── Add to workout ── */
+.add-row {
+  margin-bottom: 20px;
+}
+
+.add-subtle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.add-subtle:hover {
+  border-color: var(--color-border);
+  color: var(--color-bg);
+  background-color: var(--color-accent);
+}
+
+.no-workouts-note {
+  font-size: 13px;
+  color: var(--color-text-dim);
+  margin-bottom: 20px;
+}
+
+.no-workouts-note a {
+  color: var(--color-accent);
+}
+
+/* ── Sheet ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  z-index: 20;
+}
+
+.sheet {
+  width: 100%;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: 16px 16px 0 0;
+  padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sheet-header h3 {
+  font-size: 16px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.workout-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.workout-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  text-align: left;
+  color: var(--color-text);
+  transition: border-color 0.15s ease;
+}
+
+.workout-row:hover {
+  border-color: var(--color-accent);
+}
+
+.workout-row.added {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.workout-row-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  flex: 1;
+}
+
+.workout-row-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-dim);
+}
+
+.added-tick {
+  color: var(--color-accent);
+  font-size: 16px;
+  font-weight: 700;
 }
 </style>

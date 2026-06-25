@@ -13,7 +13,11 @@ const exercisesStore = useExercisesStore()
 
 const exercise = computed(() => exercisesStore.getById(route.params.id))
 
-const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c1443c' }
+const levelColor = {
+  beginner: 'var(--color-green)',
+  intermediate: 'var(--color-accent)',
+  expert: 'var(--color-danger)'
+}
 
 const meta = computed(() => [
   { label: 'Equipment', value: exercise.value?.equipment },

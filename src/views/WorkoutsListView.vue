@@ -25,7 +25,7 @@ function open(id) {
 <template>
   <div class="page">
     <header class="page-header">
-      <h1>Workouts</h1>
+      <h1>Workout Plans</h1>
     </header>
 
     <div v-if="workoutsStore.workouts.length === 0" class="empty-state">

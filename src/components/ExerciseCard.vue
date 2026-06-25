@@ -5,7 +5,12 @@ defineProps({
   exercise: { type: Object, required: true }
 })
 
-const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c1443c' }
+const levelColor = {
+  beginner: 'var(--color-green)',
+  intermediate: 'var(--color-accent)',
+  expert: 'var(--color-danger)'
+}
+
 </script>
 
 <template>
@@ -69,14 +74,6 @@ const levelColor = { beginner: '#4a9e6b', intermediate: '#c9a227', expert: '#c14
   font-size: 13px;
   line-height: 1.35;
   color: var(--color-text);
-}
-
-.level-pip {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-top: 4px;
 }
 
 /* ── Equipment badge ── */

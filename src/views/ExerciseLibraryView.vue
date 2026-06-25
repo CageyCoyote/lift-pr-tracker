@@ -33,7 +33,8 @@ function toggleSearch() {
     <header class="page-header">
       <div class="header-row">
         <div>
-          <span class="eyebrow">Browse</span>
+          <span v-if="searchExpanded" class="eyebrow">Search</span>
+          <span v-else class="eyebrow">Browse</span>
           <h1>Exercise Library</h1>
         </div>
         <button

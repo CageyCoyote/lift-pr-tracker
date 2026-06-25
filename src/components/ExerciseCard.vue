@@ -126,14 +126,14 @@ const levelColor = {
 }
 
 .muscle-chip.primary {
-  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
   color: var(--color-accent);
 }
 
 .muscle-chip.secondary {
-  background: color-mix(in srgb, var(--color-steel) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-steel) 35%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-steel) 70%, transparent);
   color: var(--color-steel);
 }
 

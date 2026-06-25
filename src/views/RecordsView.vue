@@ -22,8 +22,7 @@ function handleSaved(payload) {
 <template>
   <div class="page">
     <header class="page-header">
-      <span class="eyebrow">Personal Records</span>
-      <h1>Lifts</h1>
+      <h1>Personal Records</h1>
     </header>
 
     <PersonSelector />

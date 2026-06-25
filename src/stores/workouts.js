@@ -64,17 +64,32 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     }
   }
 
-  // Unique primary muscles across every exercise in the workout
+  // Unique primary muscles across every exercise in the workout.
+  // Secondary muscles are filtered to exclude any that appear in the primary set.
   function targetedMuscles(workoutId) {
     const exercisesStore = useExercisesStore()
     const w = getWorkout(workoutId)
-    if (!w) return []
-    const muscles = new Set()
+    if (!w) return { primary: new Set(), secondary: new Set() }
+
+    const primaryMuscles = new Set()
+    const secondaryMuscles = new Set()
+
     for (const item of w.items) {
       const ex = exercisesStore.getById(item.exerciseId)
-      ;(ex?.primaryMuscles || []).forEach((m) => muscles.add(m))
+        ; (ex?.primaryMuscles || []).forEach((m) => primaryMuscles.add(m))
+        ; (ex?.secondaryMuscles || []).forEach((sm) => secondaryMuscles.add(sm))
     }
-    return [...muscles].sort()
+    // reconcile difference of the 2 Sets
+    for (const m of secondaryMuscles) {
+      if (primaryMuscles.has(m)) {
+        secondaryMuscles.delete(m)
+      }
+    }
+
+    return {
+      primary: primaryMuscles,
+      secondary: secondaryMuscles
+    }
   }
 
   return {

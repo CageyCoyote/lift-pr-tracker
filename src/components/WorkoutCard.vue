@@ -1,9 +1,10 @@
 <script setup>
 defineProps({
   title: { type: String, required: true },
-  muscles: { type: Array, default: () => [] },
+  muscles: { type: Object, default: () => { return { primary: [], secondary: [] } } },
   count: { type: Number, default: 0 }
 })
+
 </script>
 
 <template>
@@ -13,8 +14,9 @@ defineProps({
       <span class="workout-count">{{ count }} exercise{{ count === 1 ? '' : 's' }}</span>
     </div>
     <div class="muscle-row">
-      <span v-for="m in muscles" :key="m" class="muscle-chip">{{ m }}</span>
-      <span v-if="muscles.length === 0" class="muscle-empty">No exercises yet</span>
+      <span v-for="pm in muscles.primary" :key="pm" class="muscle-chip primary">{{ pm }}</span>
+      <span v-for="sm in muscles.secondary" :key="sm" class="muscle-chip secondary">{{ sm }}</span>
+      <span v-if="muscles.primary.size + muscles.secondary.size === 0" class="muscle-empty">No exercises yet</span>
     </div>
   </div>
 </template>
@@ -59,13 +61,22 @@ defineProps({
 }
 
 .muscle-chip {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  color: var(--color-accent);
   font-size: 11px;
   text-transform: capitalize;
   padding: 3px 9px;
   border-radius: 999px;
+}
+
+.muscle-chip.primary {
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  color: var(--color-accent);
+}
+
+.muscle-chip.secondary {
+  background: color-mix(in srgb, var(--color-steel) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-steel) 35%, transparent);
+  color: var(--color-steel);
 }
 
 .muscle-empty {

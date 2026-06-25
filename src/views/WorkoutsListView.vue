@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkoutsStore } from '../stores/workouts'
 import WorkoutCard from '../components/WorkoutCard.vue'
@@ -20,6 +20,9 @@ function createWorkout() {
 function open(id) {
   router.push(`/plan/${id}`)
 }
+
+const muscles = (wid) => workoutsStore.targetedMuscles(wid)
+
 </script>
 
 <template>
@@ -35,7 +38,10 @@ function open(id) {
     <ul v-else class="workout-list">
       <li v-for="w in workoutsStore.workouts" :key="w.id">
         <button class="workout-link" @click="open(w.id)">
-          <WorkoutCard :title="w.title" :muscles="workoutsStore.targetedMuscles(w.id)" :count="w.items.length" />
+          <WorkoutCard
+            :title="w.title"
+            :muscles="muscles(w.id)"
+            :count="w.items.length" />
         </button>
       </li>
     </ul>

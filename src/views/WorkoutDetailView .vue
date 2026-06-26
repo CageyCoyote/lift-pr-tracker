@@ -5,9 +5,9 @@ import { useWorkoutsStore } from '../stores/workouts'
 import { useExercisesStore } from '../stores/exercises'
 import { useRecordsStore } from '../stores/records'
 import { usePeopleStore } from '../stores/people'
-import ExercisePicker from '../components/ExercisePicker.vue'
-import PRForm from '../components/PRForm.vue'
 import PRNewForm from '../components/PRNewForm.vue'
+
+const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,6 +18,10 @@ const peopleStore = usePeopleStore()
 
 const formOpen = ref(false)
 const logExercise = ref(null)
+
+// Exercise hint sheet
+const hintOpen = ref(false)
+const hintExercise = ref(null)
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
 const currentPerson = computed(() => peopleStore.getActivePerson())
@@ -40,10 +44,10 @@ function open(id) {
   router.push(`/plan/${id}/edit`)
 }
 
-// function openExerciseHint(exercise) {
-//   // opens a pop up window with the exercise image and instructions
-//   console.log(exercise.exerciseId)
-// }
+function openExerciseHint(item) {
+  hintExercise.value = exercisesStore.getById(item.exerciseId)
+  hintOpen.value = true
+}
 </script>
 
 <template>
@@ -73,8 +77,7 @@ function open(id) {
 
     <div v-if="workout.items.length === 0" class="empty-state">
       This workout is empty.
-      <router-link class="accent-link" :to="{ name: 'edit-plan', params: { id: workout.id } }"
-        aria-label="Edit Workout">
+      <router-link class="accent-link" :to="{ name: 'edit-plan', params: { id: workout.id } }" aria-label="Edit Workout">
         Add exercises here.
       </router-link>
     </div>
@@ -84,9 +87,9 @@ function open(id) {
         <div class="plan-info">
           <span class="plan-index">{{ idx + 1 }}</span>
           <div class="plan-text">
-            <!-- <button class="exercise-link" @click="openExerciseHint(item)"> -->
+            <button class="exercise-link" @click="openExerciseHint(item)">
               <span class="plan-name">{{ item.exerciseName }}</span>
-            <!-- </button> -->
+            </button>
             <span v-if="bestNote(item.exerciseId)" class="plan-best">
               <template v-if="bestNote(item.exerciseId).unit === 'bodyweight'">
                 PR: {{ bestNote(item.exerciseId).reps }} reps (bodyweight)
@@ -106,6 +109,36 @@ function open(id) {
     </ul>
 
     <PRNewForm v-model="formOpen" :initial-exercise="logExercise" @saved="handleSaved" />
+
+    <!-- Exercise hint sheet -->
+    <div v-if="hintOpen && hintExercise" class="overlay" @click.self="hintOpen = false">
+      <div class="sheet">
+        <header class="sheet-header">
+          <h3 class="sheet-title">{{ hintExercise.name }}</h3>
+          <button class="close-btn" @click="hintOpen = false" aria-label="Close">×</button>
+        </header>
+
+        <!-- Images -->
+        <div v-if="hintExercise.images?.length" class="image-row">
+          <img
+            v-for="(img, i) in hintExercise.images"
+            :key="i"
+            :src="IMAGE_BASE + img"
+            :alt="`${hintExercise.name} step ${i + 1}`"
+            class="hint-img"
+            loading="lazy"
+          />
+        </div>
+
+        <!-- Instructions -->
+        <ol class="instructions">
+          <li v-for="(step, i) in hintExercise.instructions" :key="i" class="step">
+            <span class="step-num">{{ i + 1 }}</span>
+            <p class="step-text">{{ step }}</p>
+          </li>
+        </ol>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -209,18 +242,26 @@ function open(id) {
   min-width: 0;
 }
 
-.plan-name {
-  font-weight: 600;
-  font-size: 14px;
-}
-
 .exercise-link {
   display: block;
-  width: 100%;
   background: none;
   border: none;
   padding: 0;
   color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.exercise-link:hover .plan-name {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.plan-name {
+  font-weight: 600;
+  font-size: 14px;
+  transition: color 0.15s ease;
 }
 
 .plan-best {
@@ -236,24 +277,6 @@ function open(id) {
   flex-shrink: 0;
 }
 
-.icon-btn {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-dim);
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.icon-btn.danger {
-  color: var(--color-danger);
-}
-
-.icon-btn:disabled {
-  opacity: 0.35;
-}
-
 .log-btn {
   padding: 6px 12px;
   font-size: 13px;
@@ -262,36 +285,98 @@ function open(id) {
   border: none;
 }
 
-.bottom-actions {
+/* ── Hint sheet ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
-  gap: 10px;
-  margin-top: 18px;
+  align-items: flex-end;
+  z-index: 20;
 }
 
-.bottom-actions .btn {
+.sheet {
+  width: 100%;
+  max-height: 78vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: 16px 16px 0 0;
+  padding: 18px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sheet-title {
+  font-size: 16px;
+  line-height: 1.3;
   flex: 1;
 }
 
-.picker-panel {
-  margin-top: 14px;
-}
-
-.chip {
-  flex-shrink: 0;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
+.close-btn {
+  background: none;
+  border: none;
   color: var(--color-text-dim);
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  text-decoration: none;
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
-.chip.active {
-  background: var(--color-accent);
-  color: #1a1500;
-  border-color: var(--color-accent);
+/* ── Images ── */
+.image-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.hint-img {
+  height: 160px;
+  width: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+/* ── Instructions ── */
+.instructions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.step-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-accent);
+  font-weight: 700;
+  width: 18px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.step-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text);
 }
 </style>

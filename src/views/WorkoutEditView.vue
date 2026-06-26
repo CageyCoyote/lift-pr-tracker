@@ -64,11 +64,11 @@ function deleteWorkout() {
 <template>
   <div v-if="!workout" class="page">
     <p class="empty-state">Workout not found.</p>
-    <router-link to="/plan" class="btn">Back to Workouts</router-link>
+    <router-link to="/plans" class="btn">Back to Workouts</router-link>
   </div>
 
   <div v-else class="page">
-    <router-link to="/plan" class="back-link">← Workouts</router-link>
+    <router-link :to="{ name: 'plan-detail', params: {id: workout.id}}"class="back-link">← Back</router-link>
 
     <header class="page-header">
       <form v-if="renaming" class="rename-form" @submit.prevent="saveRename">
@@ -106,7 +106,6 @@ function deleteWorkout() {
             aria-label="Move up">↑</button>
           <button class="icon-btn" :disabled="idx === workout.items.length - 1"
             @click="workoutsStore.moveDown(workout.id, item.id)" aria-label="Move down">↓</button>
-          <button v-if="peopleStore.activePersonId" class="btn log-btn" @click="openLog(item)">Log</button>
           <button class="icon-btn danger" @click="workoutsStore.removeItem(workout.id, item.id)"
             aria-label="Remove">×</button>
         </div>
@@ -115,7 +114,7 @@ function deleteWorkout() {
 
     <div class="bottom-actions">
       <button class="btn btn-accent" @click="pickerOpen = !pickerOpen">
-        {{ pickerOpen ? 'Close picker' : '+ Add exercise' }}
+        {{ pickerOpen ? 'Close' : '+ Add Exercise' }}
       </button>
       <button class="btn btn-danger" @click="deleteWorkout">Delete workout</button>
     </div>

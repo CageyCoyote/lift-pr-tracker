@@ -1,6 +1,10 @@
 <script setup>
 import { ref, watch } from 'vue'
 import ExercisePicker from './ExercisePicker.vue'
+import PersonSelector from './PersonSelector.vue'
+import { usePeopleStore } from '../stores/people'
+
+const peopleStore = usePeopleStore()
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -70,6 +74,11 @@ function save() {
         <button class="close-btn" @click="close" aria-label="Close">×</button>
       </header>
 
+      <div class="person-row">
+        <span class="eyebrow">Recording for</span>
+        <PersonSelector />
+      </div>
+
       <ExercisePicker v-if="step === 'pick'" @select="pick" />
 
       <form v-else class="entry-form" @submit.prevent="save">
@@ -97,7 +106,7 @@ function save() {
           <button v-if="!initialExercise" type="button" class="btn" @click="step = 'pick'">
             Back
           </button>
-          <button type="submit" class="btn btn-accent">Save PR</button>
+          <button type="submit" class="btn btn-accent" :disabled="!peopleStore.activePersonId">Save PR</button>
         </div>
       </form>
     </div>
@@ -122,6 +131,15 @@ function save() {
   border-radius: 16px 16px 0 0;
   padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--color-border);
+}
+
+.person-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .sheet-header {

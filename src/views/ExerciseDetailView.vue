@@ -3,6 +3,9 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExercisesStore } from '../stores/exercises'
 import { useWorkoutsStore } from '../stores/workouts'
+import { useRecordsStore } from '../stores/records'
+import { usePeopleStore } from '../stores/people'
+import PRNewForm from '../components/PRNewForm.vue'
 
 // Base URL for exercise images — update this to wherever your images are hosted
 // const IMAGE_BASE = '/images/exercises/'
@@ -12,6 +15,8 @@ const route = useRoute()
 const router = useRouter()
 const exercisesStore = useExercisesStore()
 const workoutsStore = useWorkoutsStore()
+const recordsStore = useRecordsStore()
+const peopleStore = usePeopleStore()
 
 const exercise = computed(() => exercisesStore.getById(route.params.id))
 
@@ -40,6 +45,13 @@ function addToWorkout(workout) {
     addedToId.value = null
   }, 800)
 }
+
+// Log PR
+const prFormOpen = ref(false)
+
+function handleSaved(payload) {
+  recordsStore.addEntry({ personId: peopleStore.activePersonId, ...payload })
+}
 </script>
 
 <template>
@@ -62,14 +74,12 @@ function addToWorkout(workout) {
 
     <!-- Add to workout -->
     <div class="add-row">
-      <!-- <button class="add-button-outline steel" @click="prSheetOpen()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-          stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
+      <button v-if="peopleStore.activePersonId" class="add-button-outline steel" @click="prFormOpen = true">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
         Add PR
-      </button> -->
+      </button>
       <button v-if="workoutsStore.workouts.length" class="add-button-outline accent" @click="sheetOpen = true">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
           stroke-linecap="round" stroke-linejoin="round">
@@ -148,6 +158,7 @@ function addToWorkout(workout) {
         </ul>
       </div>
     </div>
+    <PRNewForm v-model="prFormOpen" :initial-exercise="exercise" @saved="handleSaved" />
   </div>
 </template>
 

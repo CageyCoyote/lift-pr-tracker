@@ -24,7 +24,6 @@ const hintOpen = ref(false)
 const hintExercise = ref(null)
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
-const currentPerson = computed(() => peopleStore.getActivePerson())
 
 function bestNote(exerciseId) {
   if (!peopleStore.activePersonId) return null
@@ -62,7 +61,6 @@ function openExerciseHint(item) {
     <header class="page-header flex">
       <div>
         <h1>{{ workout.title }}</h1>
-        <span v-if="currentPerson" class="subtitle">Recording for {{ currentPerson.name }}</span>
       </div>
       <div>
         <button class="action-btn edit-btn" @click="open(workout.id)" aria-label="Edit Workout">
@@ -335,6 +333,7 @@ function openExerciseHint(item) {
   display: flex;
   gap: 10px;
   overflow-x: auto;
+  flex-shrink: 0;
 }
 
 .hint-img {

@@ -14,7 +14,7 @@ function createWorkout() {
   const w = workoutsStore.createWorkout(newTitle.value)
   newTitle.value = ''
   creating.value = false
-  router.push(`/plan/${w.id}`)
+  router.push(`/plan/${w.id}/edit`)
 }
 
 function open(id) {

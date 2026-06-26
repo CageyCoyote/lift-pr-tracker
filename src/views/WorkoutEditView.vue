@@ -68,16 +68,15 @@ function deleteWorkout() {
   </div>
 
   <div v-else class="page">
-    <router-link :to="{ name: 'plan-detail', params: {id: workout.id}}"class="back-link">← Back</router-link>
+    <router-link :to="{ name: 'plan-detail', params: { id: workout.id } }" class="back-link">← Back</router-link>
 
     <header class="page-header">
       <form v-if="renaming" class="rename-form" @submit.prevent="saveRename">
-        <input v-model="titleDraft" type="text" autofocus />
+        <input v-model="titleDraft" type="text" placeholder="Workout name, e.g. Push Day" required autofocus />
         <button type="submit" class="btn btn-accent">Save</button>
       </form>
 
       <h1 v-else class="title-row" @click="startRename">{{ workout.title }}</h1>
-      <span v-if="!renaming && currentPerson" class="subtitle">Recording for {{ currentPerson.name }}</span>
     </header>
 
     <div v-if="workout.items.length === 0" class="empty-state">
@@ -153,6 +152,7 @@ function deleteWorkout() {
 
 .title-row {
   cursor: pointer;
+  text-transform: capitalize;
 }
 
 .rename-form {
@@ -165,7 +165,7 @@ function deleteWorkout() {
   flex: 1;
   font-family: var(--font-display);
   font-size: 20px;
-  text-transform: uppercase;
+  /* text-transform: uppercase; */
 }
 
 .empty-state {

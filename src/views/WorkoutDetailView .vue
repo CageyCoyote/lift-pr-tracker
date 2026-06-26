@@ -56,7 +56,7 @@ function openExerciseHint(exercise) {
 
     <header class="page-header flex">
       <div>
-        <h1 class="title-row">{{ workout.title }}</h1>
+        <h1>{{ workout.title }}</h1>
         <span v-if="currentPerson" class="subtitle">Recording for {{ currentPerson.name }}</span>
       </div>
       <div>
@@ -71,7 +71,11 @@ function openExerciseHint(exercise) {
     </header>
 
     <div v-if="workout.items.length === 0" class="empty-state">
-      This workout is empty. Add exercises below.
+      This workout is empty.
+      <router-link class="accent-link" :to="{ name: 'edit-plan', params: { id: workout.id } }"
+        aria-label="Edit Workout">
+        Add exercises here.
+      </router-link>
     </div>
 
     <ul v-else class="plan-list">
@@ -133,9 +137,8 @@ function openExerciseHint(exercise) {
 .page-header h1 {
   font-size: 28px;
   margin-top: 2px;
+  text-transform: capitalize;
 }
-
-.title-row {}
 
 .action-btn {
   background: none;
@@ -157,6 +160,10 @@ function openExerciseHint(exercise) {
   color: var(--color-text-dim);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.accent-link {
+  color: var(--color-accent);
 }
 
 .plan-list {

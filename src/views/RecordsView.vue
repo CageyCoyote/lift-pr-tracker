@@ -4,7 +4,7 @@ import { usePeopleStore } from '../stores/people'
 import { useRecordsStore } from '../stores/records'
 import PersonSelector from '../components/PersonSelector.vue'
 import PRCard from '../components/PRCard.vue'
-import PRForm from '../components/PRForm.vue'
+import PRSearchForm from '../components/PRSearchForm.vue'
 
 const peopleStore = usePeopleStore()
 const recordsStore = useRecordsStore()
@@ -48,7 +48,8 @@ function handleSaved(payload) {
       <button class="btn btn-accent fab" @click="formOpen = true">+ Log a PR</button>
     </template>
 
-    <PRForm v-model="formOpen" :person-id="peopleStore.activePersonId" @saved="handleSaved" />
+    <!-- search the library for a new PR -->
+    <PRSearchForm v-model="formOpen" :person-id="peopleStore.activePersonId" @saved="handleSaved" />
   </div>
 </template>
 

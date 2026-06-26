@@ -22,7 +22,6 @@ watch(
   () => props.modelValue,
   (open) => {
     if (open) {
-      console.log(props)
       // New entry mode
       isEditMode.value = false
       exercise.value = props.initialExercise || null

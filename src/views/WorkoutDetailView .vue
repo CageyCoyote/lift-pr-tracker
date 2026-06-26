@@ -7,6 +7,7 @@ import { useRecordsStore } from '../stores/records'
 import { usePeopleStore } from '../stores/people'
 import ExercisePicker from '../components/ExercisePicker.vue'
 import PRForm from '../components/PRForm.vue'
+import PRNewForm from '../components/PRNewForm.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -39,10 +40,10 @@ function open(id) {
   router.push(`/plan/${id}/edit`)
 }
 
-function openExerciseHint(exercise) {
-  // opens a pop up window with the exercise image and instructions
-  console.log(exercise.exerciseId)
-}
+// function openExerciseHint(exercise) {
+//   // opens a pop up window with the exercise image and instructions
+//   console.log(exercise.exerciseId)
+// }
 </script>
 
 <template>
@@ -83,9 +84,9 @@ function openExerciseHint(exercise) {
         <div class="plan-info">
           <span class="plan-index">{{ idx + 1 }}</span>
           <div class="plan-text">
-            <button class="exercise-link" @click="openExerciseHint(item)">
+            <!-- <button class="exercise-link" @click="openExerciseHint(item)"> -->
               <span class="plan-name">{{ item.exerciseName }}</span>
-            </button>
+            <!-- </button> -->
             <span v-if="bestNote(item.exerciseId)" class="plan-best">
               <template v-if="bestNote(item.exerciseId).unit === 'bodyweight'">
                 PR: {{ bestNote(item.exerciseId).reps }} reps (bodyweight)
@@ -104,7 +105,7 @@ function openExerciseHint(exercise) {
       </li>
     </ul>
 
-    <PRForm v-model="formOpen" :initial-exercise="logExercise" @saved="handleSaved" />
+    <PRNewForm v-model="formOpen" :initial-exercise="logExercise" @saved="handleSaved" />
   </div>
 </template>
 

@@ -61,15 +61,25 @@ function addToWorkout(workout) {
     </header>
 
     <!-- Add to workout -->
-    <div v-if="workoutsStore.workouts.length" class="add-row">
-      <button class="add-subtle" @click="sheetOpen = true">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    <div class="add-row">
+      <!-- <button class="add-button-outline steel" @click="prSheetOpen()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Add PR
+      </button> -->
+      <button v-if="workoutsStore.workouts.length" class="add-button-outline accent" @click="sheetOpen = true">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
         Add to workout
       </button>
     </div>
-    <p v-else class="no-workouts-note">
+    <p v-if="!workoutsStore.workouts.length" class="no-workouts-note">
       <router-link to="/plan">Create a workout</router-link> to add this exercise.
     </p>
 
@@ -138,11 +148,14 @@ function addToWorkout(workout) {
         </ul>
       </div>
     </div>
-
   </div>
 </template>
 
 <style scoped>
+.steel {
+  color: var(--color-steel);
+}
+
 .back-link {
   display: inline-block;
   color: var(--color-text-dim);
@@ -331,9 +344,18 @@ function addToWorkout(workout) {
 /* ── Add to workout ── */
 .add-row {
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
-.add-subtle {
+.add-row button {
+  margin-right: 10px;
+  margin-top: 5px;
+}
+
+.add-button-outline {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -347,10 +369,26 @@ function addToWorkout(workout) {
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.add-subtle:hover {
+.add-button-outline.accent:hover {
   border-color: var(--color-border);
   color: var(--color-bg);
   background-color: var(--color-accent);
+}
+
+.add-button-outline.steel:hover {
+  border-color: var(--color-border);
+  color: #fff;
+  background-color: var(--color-steel);
+}
+
+.add-button-outline.steel {
+  border-color: var(--color-steel);
+  color: var(--color-steel)
+}
+
+.add-button-outline.accent {
+  border-color: var(--color-accent);
+  color: var(--color-accent)
 }
 
 .no-workouts-note {

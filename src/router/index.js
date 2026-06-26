@@ -6,10 +6,11 @@ import WorkoutDetailView from '../views/workouts/WorkoutDetailView .vue'
 import PeopleView from '../views/people/PeopleView.vue'
 import ExerciseLibraryView from '../views/library/ExerciseLibraryView.vue'
 import ExerciseDetailView from '../views/library/ExerciseDetailView.vue'
+import AccountView from '../views/AccountView.vue'
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.VUE_APP_BASE_URL || ''),
-  base: import.meta.env.VUE_APP_BASE_URL || "/",
+  base: import.meta.env.VUE_APP_BASE_URL || '/',
   routes: [
     { path: '/', name: 'records', component: RecordsView },
     { path: '/plan', name: 'workouts', component: WorkoutsListView },
@@ -17,7 +18,8 @@ export const router = createRouter({
     { path: '/plan/:id/edit', name: 'edit-plan', component: WorkoutEditView },
     { path: '/people', name: 'people', component: PeopleView },
     { path: '/library', name: 'library', component: ExerciseLibraryView },
-    { path: '/library/:id', name: 'exercise-detail', component: ExerciseDetailView }
+    { path: '/library/:id', name: 'exercise-detail', component: ExerciseDetailView },
+    { path: '/account', name: 'account', component: AccountView },
   ],
   scrollBehavior (to, from, savedPosition) {
     if(to.name === 'library'){

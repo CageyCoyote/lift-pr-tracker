@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useExercisesStore } from '../stores/exercises'
+import { useExercisesStore } from '../../stores/exercises'
 
 const emit = defineEmits(['select'])
 const exercisesStore = useExercisesStore()

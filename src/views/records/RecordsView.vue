@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { usePeopleStore } from '../stores/people'
-import { useRecordsStore } from '../stores/records'
-import PersonSelector from '../components/PersonSelector.vue'
-import PRCard from '../components/PRCard.vue'
-import PRSearchForm from '../components/PRSearchForm.vue'
+import { usePeopleStore } from '../../stores/people'
+import { useRecordsStore } from '../../stores/records'
+import PersonSelector from '../../components/common/PersonSelector.vue'
+import PRCard from '../../components/records/PRCard.vue'
+import PRSearchForm from '../../components/records/PRSearchForm.vue'
 
 const peopleStore = usePeopleStore()
 const recordsStore = useRecordsStore()
@@ -36,13 +36,8 @@ function handleSaved(payload) {
         No PRs logged yet for this person. Tap "Log a PR" to add the first one.
       </div>
       <div v-else class="card-list">
-        <PRCard
-          v-for="b in bests"
-          :key="b.exerciseId"
-          :person-id="peopleStore.activePersonId"
-          :exercise-id="b.exerciseId"
-          :best="b.best"
-        />
+        <PRCard v-for="b in bests" :key="b.exerciseId" :person-id="peopleStore.activePersonId"
+          :exercise-id="b.exerciseId" :best="b.best" />
       </div>
 
       <button class="btn btn-accent fab" @click="formOpen = true">+ Log a PR</button>

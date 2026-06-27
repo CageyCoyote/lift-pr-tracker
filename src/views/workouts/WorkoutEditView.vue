@@ -1,12 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useWorkoutsStore } from '../stores/workouts'
-import { useExercisesStore } from '../stores/exercises'
-import { useRecordsStore } from '../stores/records'
-import { usePeopleStore } from '../stores/people'
-import ExercisePicker from '../components/ExercisePicker.vue'
-import PRForm from '../components/PRForm.vue'
+import { useWorkoutsStore } from '../../stores/workouts'
+import { useExercisesStore } from '../../stores/exercises'
+import { useRecordsStore } from '../../stores/records'
+import { usePeopleStore } from '../../stores/people'
+import ExercisePicker from '../../components/exercises/ExercisePicker.vue'
+import PRForm from '../../components/records/PRForm.vue'
 
 const route = useRoute()
 const router = useRouter()

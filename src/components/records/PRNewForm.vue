@@ -1,15 +1,17 @@
 <script setup>
 import { ref, watch } from 'vue'
-import ExercisePicker from './ExercisePicker.vue'
+import ExercisePicker from '../exercises/ExercisePicker.vue'
+import PersonSelector from '../common/PersonSelector.vue'
+import { usePeopleStore } from '../../stores/people'
+
+const peopleStore = usePeopleStore()
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   personId: { type: String, default: null },
   initialExercise: { type: Object, default: null },
-  // When set, the form is in edit mode — pre-fills fields and emits 'updated' instead of 'saved'
-  editEntry: { type: Object, default: null }
 })
-const emit = defineEmits(['update:modelValue', 'updated'])
+const emit = defineEmits(['update:modelValue', 'saved'])
 
 const step = ref('pick')
 const exercise = ref(null)
@@ -18,21 +20,20 @@ const reps = ref('')
 const date = ref(new Date().toISOString().slice(0, 10))
 const unit = ref('lb')
 
-const isEditMode = ref(true)
+const isEditMode = ref(false)
 
 watch(
   () => props.modelValue,
   (open) => {
     if (open) {
-      if (props.editEntry) {
-        // Edit mode — pre-fill from the entry being edited
-        exercise.value = props.initialExercise || { id: props.editEntry.exerciseId, name: props.editEntry.exerciseName }
-        step.value = 'entry'
-        weight.value = props.editEntry.unit === 'bodyweight' ? '' : props.editEntry.weight
-        reps.value = props.editEntry.reps
-        unit.value = props.editEntry.unit
-        date.value = props.editEntry.date
-      }
+      // New entry mode
+      isEditMode.value = false
+      exercise.value = props.initialExercise || null
+      step.value = exercise.value ? 'entry' : 'pick'
+      weight.value = ''
+      reps.value = ''
+      unit.value = props.initialExercise.equipment === "body only" ? "bodyweight" : 'lb'
+      date.value = new Date().toISOString().slice(0, 10)
     }
   }
 )
@@ -53,9 +54,9 @@ function save() {
   } else if (!weight.value) {
     return
   }
-
-  emit('updated', {
-    id: props.editEntry.id,
+  emit('saved', {
+    exerciseId: exercise.value.id,
+    exerciseName: exercise.value.name,
     weight: unit.value === 'bodyweight' ? 0 : weight.value,
     reps: reps.value || 1,
     unit: unit.value,
@@ -69,17 +70,24 @@ function save() {
   <div v-if="modelValue" class="overlay" @click.self="close">
     <div class="sheet">
       <header class="sheet-header">
-        <h3>Edit PR: {{ exercise.name }}</h3>
+        <h3>{{ exercise.name }}</h3>
         <button class="close-btn" @click="close" aria-label="Close">×</button>
       </header>
 
-      <form class="entry-form" @submit.prevent="save">
+      <div class="person-row">
+        <span class="eyebrow">Recording for</span>
+        <PersonSelector />
+      </div>
+
+      <ExercisePicker v-if="step === 'pick'" @select="pick" />
+
+      <form v-else class="entry-form" @submit.prevent="save">
         <label class="field">
           <span class="eyebrow">Weight</span>
           <div class="weight-row">
             <input v-if="unit !== 'bodyweight'" v-model="weight" type="number" min="0" step="0.5" required autofocus />
             <span v-else class="bodyweight-note">Tracked by reps, no added weight</span>
-            <select v-model="unit">
+            <select v-model="unit" name="unit">
               <option value="lb">lb</option>
               <option value="kg">kg</option>
               <option value="bodyweight">Bodyweight</option>
@@ -98,7 +106,7 @@ function save() {
           <button v-if="!initialExercise" type="button" class="btn" @click="step = 'pick'">
             Back
           </button>
-          <button type="submit" class="btn btn-accent">Update Entry</button>
+          <button type="submit" class="btn btn-accent" :disabled="!peopleStore.activePersonId">Save PR</button>
         </div>
       </form>
     </div>
@@ -123,6 +131,15 @@ function save() {
   border-radius: 16px 16px 0 0;
   padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--color-border);
+}
+
+.person-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .sheet-header {

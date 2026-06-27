@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useWorkoutsStore } from '../stores/workouts'
-import { useExercisesStore } from '../stores/exercises'
-import { useRecordsStore } from '../stores/records'
-import { usePeopleStore } from '../stores/people'
-import PRNewForm from '../components/PRNewForm.vue'
+import { useWorkoutsStore } from '../../stores/workouts'
+import { useExercisesStore } from '../../stores/exercises'
+import { useRecordsStore } from '../../stores/records'
+import { usePeopleStore } from '../../stores/people'
+import PRNewForm from '../../components/records/PRNewForm.vue'
 
 const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
 
@@ -75,7 +75,8 @@ function openExerciseHint(item) {
 
     <div v-if="workout.items.length === 0" class="empty-state">
       This workout is empty.
-      <router-link class="accent-link" :to="{ name: 'edit-plan', params: { id: workout.id } }" aria-label="Edit Workout">
+      <router-link class="accent-link" :to="{ name: 'edit-plan', params: { id: workout.id } }"
+        aria-label="Edit Workout">
         Add exercises here.
       </router-link>
     </div>
@@ -118,14 +119,8 @@ function openExerciseHint(item) {
 
         <!-- Images -->
         <div v-if="hintExercise.images?.length" class="image-row">
-          <img
-            v-for="(img, i) in hintExercise.images"
-            :key="i"
-            :src="IMAGE_BASE + img"
-            :alt="`${hintExercise.name} step ${i + 1}`"
-            class="hint-img"
-            loading="lazy"
-          />
+          <img v-for="(img, i) in hintExercise.images" :key="i" :src="IMAGE_BASE + img"
+            :alt="`${hintExercise.name} step ${i + 1}`" class="hint-img" loading="lazy" />
         </div>
 
         <!-- Instructions -->

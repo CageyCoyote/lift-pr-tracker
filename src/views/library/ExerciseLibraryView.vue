@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useExercisesStore } from '../stores/exercises'
-import ExerciseCard from '../components/ExerciseCard.vue'
+import { useExercisesStore } from '../../stores/exercises'
+import ExerciseCard from '../../components/exercises/ExerciseCard.vue'
 
 const exercisesStore = useExercisesStore()
 
@@ -37,14 +37,12 @@ function toggleSearch() {
           <span v-else class="eyebrow">Browse</span>
           <h1>Exercise Library</h1>
         </div>
-        <button
-          class="search-toggle"
-          :class="{ active: searchExpanded || hasFilters }"
-          @click="toggleSearch"
-          aria-label="Toggle search"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <button class="search-toggle" :class="{ active: searchExpanded || hasFilters }" @click="toggleSearch"
+          aria-label="Toggle search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
         </button>
       </div>
@@ -65,7 +63,8 @@ function toggleSearch() {
             <option v-for="c in exercisesStore.categoryOptions" :key="c" :value="c">{{ c }}</option>
           </select>
         </div>
-        <p v-if="hasFilters" class="result-count">{{ exercises.length }} result{{ exercises.length === 1 ? '' : 's' }}</p>
+        <p v-if="hasFilters" class="result-count">{{ exercises.length }} result{{ exercises.length === 1 ? '' : 's' }}
+        </p>
       </div>
     </header>
   </div>

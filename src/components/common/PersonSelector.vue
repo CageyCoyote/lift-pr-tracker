@@ -1,18 +1,13 @@
 <script setup>
-import { usePeopleStore } from '../stores/people'
+import { usePeopleStore } from '../../stores/people'
 
 const peopleStore = usePeopleStore()
 </script>
 
 <template>
   <div class="selector">
-    <button
-      v-for="p in peopleStore.people"
-      :key="p.id"
-      class="chip"
-      :class="{ active: p.id === peopleStore.activePersonId }"
-      @click="peopleStore.setActivePerson(p.id)"
-    >
+    <button v-for="p in peopleStore.people" :key="p.id" class="chip"
+      :class="{ active: p.id === peopleStore.activePersonId }" @click="peopleStore.setActivePerson(p.id)">
       {{ p.name }}
     </button>
     <router-link v-if="peopleStore.people.length === 0" to="/people" class="chip add-link">

@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue'
-import PlateBadge from './PlateBadge.vue'
-import { useRecordsStore } from '../stores/records'
-import { useExercisesStore } from '../stores/exercises'
+import PlateBadge from '../common/PlateBadge.vue'
+import { useRecordsStore } from '../../stores/records'
+import { useExercisesStore } from '../../stores/exercises'
 import PRForm from './PRForm.vue'
 import PREditForm from './PREditForm.vue'
 import PRNewForm from './PRNewForm.vue'

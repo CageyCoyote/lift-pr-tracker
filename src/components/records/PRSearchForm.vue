@@ -1,15 +1,12 @@
 <script setup>
 import { ref, watch } from 'vue'
-import ExercisePicker from './ExercisePicker.vue'
+import ExercisePicker from '../exercises/ExercisePicker.vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   personId: { type: String, default: null },
-  initialExercise: { type: Object, default: null },
-  // When set, the form is in edit mode — pre-fills fields and emits 'updated' instead of 'saved'
-  editEntry: { type: Object, default: null }
 })
-const emit = defineEmits(['update:modelValue', 'saved', 'updated'])
+const emit = defineEmits(['update:modelValue', 'saved'])
 
 const step = ref('pick')
 const exercise = ref(null)
@@ -18,31 +15,18 @@ const reps = ref('')
 const date = ref(new Date().toISOString().slice(0, 10))
 const unit = ref('lb')
 
-const isEditMode = ref(false)
 
 watch(
   () => props.modelValue,
   (open) => {
     if (open) {
-      if (props.editEntry) {
-        // Edit mode — pre-fill from the entry being edited
-        isEditMode.value = true
-        exercise.value = props.initialExercise || { id: props.editEntry.exerciseId, name: props.editEntry.exerciseName }
-        step.value = 'entry'
-        weight.value = props.editEntry.unit === 'bodyweight' ? '' : props.editEntry.weight
-        reps.value = props.editEntry.reps
-        unit.value = props.editEntry.unit
-        date.value = props.editEntry.date
-      } else {
-        // New entry mode
-        isEditMode.value = false
-        exercise.value = props.initialExercise || null
-        step.value = exercise.value ? 'entry' : 'pick'
-        weight.value = ''
-        reps.value = ''
-        unit.value = 'lb'
-        date.value = new Date().toISOString().slice(0, 10)
-      }
+      // New entry mode
+      exercise.value = props.initialExercise || null
+      step.value = exercise.value ? 'entry' : 'pick'
+      weight.value = ''
+      reps.value = ''
+      unit.value = 'lb'
+      date.value = new Date().toISOString().slice(0, 10)
     }
   }
 )
@@ -50,6 +34,7 @@ watch(
 function pick(ex) {
   exercise.value = ex
   step.value = 'entry'
+  unit.value = ex.equipment === "body only" ? "bodyweight" : 'lb'
 }
 
 function close() {
@@ -64,24 +49,14 @@ function save() {
     return
   }
 
-  if (isEditMode.value) {
-    emit('updated', {
-      id: props.editEntry.id,
-      weight: unit.value === 'bodyweight' ? 0 : weight.value,
-      reps: reps.value || 1,
-      unit: unit.value,
-      date: date.value
-    })
-  } else {
-    emit('saved', {
-      exerciseId: exercise.value.id,
-      exerciseName: exercise.value.name,
-      weight: unit.value === 'bodyweight' ? 0 : weight.value,
-      reps: reps.value || 1,
-      unit: unit.value,
-      date: date.value
-    })
-  }
+  emit('saved', {
+    exerciseId: exercise.value.id,
+    exerciseName: exercise.value.name,
+    weight: unit.value === 'bodyweight' ? 0 : weight.value,
+    reps: reps.value || 1,
+    unit: unit.value,
+    date: date.value
+  })
   close()
 }
 </script>
@@ -90,7 +65,7 @@ function save() {
   <div v-if="modelValue" class="overlay" @click.self="close">
     <div class="sheet">
       <header class="sheet-header">
-        <h3>{{ isEditMode ? 'Edit Entry' : step === 'pick' ? 'Choose Exercise' : exercise.name }}</h3>
+        <h3>{{ step === 'pick' ? 'Choose Exercise' : exercise.name }}</h3>
         <button class="close-btn" @click="close" aria-label="Close">×</button>
       </header>
 
@@ -100,15 +75,7 @@ function save() {
         <label class="field">
           <span class="eyebrow">Weight</span>
           <div class="weight-row">
-            <input
-              v-if="unit !== 'bodyweight'"
-              v-model="weight"
-              type="number"
-              min="0"
-              step="0.5"
-              required
-              autofocus
-            />
+            <input v-if="unit !== 'bodyweight'" v-model="weight" type="number" min="0" step="0.5" required autofocus />
             <span v-else class="bodyweight-note">Tracked by reps, no added weight</span>
             <select v-model="unit">
               <option value="lb">lb</option>
@@ -119,14 +86,7 @@ function save() {
         </label>
         <label class="field">
           <span class="eyebrow">Reps</span>
-          <input
-            v-model="reps"
-            type="number"
-            min="1"
-            step="1"
-            placeholder="1"
-            :required="unit === 'bodyweight'"
-          />
+          <input v-model="reps" type="number" min="1" step="1" placeholder="1" :required="unit === 'bodyweight'" />
         </label>
         <label class="field">
           <span class="eyebrow">Date</span>
@@ -136,7 +96,7 @@ function save() {
           <button v-if="!initialExercise" type="button" class="btn" @click="step = 'pick'">
             Back
           </button>
-          <button type="submit" class="btn btn-accent">{{ isEditMode ? 'Update Entry' : 'Save PR' }}</button>
+          <button type="submit" class="btn btn-accent">Save PR</button>
         </div>
       </form>
     </div>
@@ -218,7 +178,7 @@ function save() {
 }
 
 .weight-row select {
-  width: 80px;
+  width: 125px;
 }
 
 .actions {

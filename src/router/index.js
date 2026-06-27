@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import RecordsView from '../views/RecordsView.vue'
-import WorkoutsListView from '../views/WorkoutsListView.vue'
-import WorkoutEditView from '../views/WorkoutEditView.vue'
-import PeopleView from '../views/PeopleView.vue'
-import ExerciseLibraryView from '../views/ExerciseLibraryView.vue'
-import ExerciseDetailView from '../views/ExerciseDetailView.vue'
-import WorkoutDetailView from '../views/WorkoutDetailView .vue'
+import RecordsView from '../views/records/RecordsView.vue'
+import WorkoutsListView from '../views/workouts/WorkoutsListView.vue'
+import WorkoutEditView from '../views/workouts/WorkoutEditView.vue'
+import WorkoutDetailView from '../views/workouts/WorkoutDetailView .vue'
+import PeopleView from '../views/people/PeopleView.vue'
+import ExerciseLibraryView from '../views/library/ExerciseLibraryView.vue'
+import ExerciseDetailView from '../views/library/ExerciseDetailView.vue'
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.VUE_APP_BASE_URL || ''),

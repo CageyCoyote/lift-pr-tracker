@@ -14,13 +14,22 @@ export const useWorkoutsStore = defineStore('workouts', () => {
   }
 
   function createWorkout(title) {
+    const now = new Date().toISOString()
     const workout = {
       id: crypto.randomUUID(),
+      shareId: null,          // populated when user shares via QR
       title: title?.trim() || 'Untitled Workout',
-      items: []
+      items: [],
+      createdAt: now,
+      updatedAt: now,
     }
     workouts.value.push(workout)
     return workout
+  }
+
+  function touch(id) {
+    const w = getWorkout(id)
+    if (w) w.updatedAt = new Date().toISOString()
   }
 
   function removeWorkout(id) {
@@ -29,19 +38,24 @@ export const useWorkoutsStore = defineStore('workouts', () => {
 
   function renameWorkout(id, title) {
     const w = getWorkout(id)
-    if (w && title?.trim()) w.title = title.trim()
+    if (w && title?.trim()) {
+      w.title = title.trim()
+      touch(id)
+    }
   }
 
   function addExercise(workoutId, exercise) {
     const w = getWorkout(workoutId)
     if (!w) return
     w.items.push({ id: crypto.randomUUID(), exerciseId: exercise.id, exerciseName: exercise.name })
+    touch(workoutId)
   }
 
   function removeItem(workoutId, itemId) {
     const w = getWorkout(workoutId)
     if (!w) return
     w.items = w.items.filter((i) => i.id !== itemId)
+    touch(workoutId)
   }
 
   function moveUp(workoutId, itemId) {
@@ -51,6 +65,7 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     if (i > 0) {
       const [item] = w.items.splice(i, 1)
       w.items.splice(i - 1, 0, item)
+      touch(workoutId)
     }
   }
 
@@ -61,6 +76,7 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     if (i !== -1 && i < w.items.length - 1) {
       const [item] = w.items.splice(i, 1)
       w.items.splice(i + 1, 0, item)
+      touch(workoutId)
     }
   }
 
@@ -102,6 +118,7 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     removeItem,
     moveUp,
     moveDown,
+    touch,
     targetedMuscles
   }
 })

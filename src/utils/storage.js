@@ -57,6 +57,7 @@ async function migrateFromLocalStorage() {
 
   console.info('[storage] Migrating localStorage → IndexedDB…')
   let count = 0
+  let failed = 0
 
   for (const key of ALL_KEYS) {
     try {
@@ -66,12 +67,19 @@ async function migrateFromLocalStorage() {
         count++
       }
     } catch (e) {
-      console.warn(`[storage] Failed to migrate key "${key}":`, e)
+      failed++
+      console.error(`[storage] Failed to migrate key "${key}" — will retry on next launch:`, e)
     }
   }
 
-  await idbSet('__migrated__', true)
-  console.info(`[storage] Migration complete — ${count} key(s) moved.`)
+  if (failed === 0) {
+    // Only mark complete when every key succeeded.
+    // If any failed, we leave the flag unset so the next app launch retries.
+    await idbSet('__migrated__', true)
+    console.info(`[storage] Migration complete — ${count} key(s) moved.`)
+  } else {
+    console.warn(`[storage] Migration partial — ${count} succeeded, ${failed} failed. Will retry on next launch.`)
+  }
 }
 
 // ── Public init — call once in main.js before createApp() ─────────────────

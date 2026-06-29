@@ -52,13 +52,6 @@ function saveRename() {
   workoutsStore.renameWorkout(workout.value.id, titleDraft.value)
   renaming.value = false
 }
-
-function deleteWorkout() {
-  if (confirm(`Delete "${workout.value.title}"? This can't be undone.`)) {
-    workoutsStore.removeWorkout(workout.value.id)
-    router.push('/plan')
-  }
-}
 </script>
 
 <template>
@@ -115,7 +108,6 @@ function deleteWorkout() {
       <button class="btn btn-accent" @click="pickerOpen = !pickerOpen">
         {{ pickerOpen ? 'Close' : '+ Add Exercise' }}
       </button>
-      <button class="btn btn-danger" @click="deleteWorkout">Delete workout</button>
     </div>
 
     <div v-if="pickerOpen" class="picker-panel">

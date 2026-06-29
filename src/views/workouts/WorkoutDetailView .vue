@@ -6,6 +6,7 @@ import { useExercisesStore } from '../../stores/exercises'
 import { useRecordsStore } from '../../stores/records'
 import { usePeopleStore } from '../../stores/people'
 import PRNewForm from '../../components/records/PRNewForm.vue'
+import WorkoutQRSheet from '../../components/workouts/WorkoutQRSheet.vue'
 
 const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
 
@@ -16,6 +17,9 @@ const exercisesStore = useExercisesStore()
 const recordsStore = useRecordsStore()
 const peopleStore = usePeopleStore()
 
+const workout = computed(() => workoutsStore.getWorkout(route.params.id))
+
+// PR form
 const formOpen = ref(false)
 const logExercise = ref(null)
 
@@ -23,7 +27,11 @@ const logExercise = ref(null)
 const hintOpen = ref(false)
 const hintExercise = ref(null)
 
-const workout = computed(() => workoutsStore.getWorkout(route.params.id))
+// 3-dot menu
+const menuOpen = ref(false)
+
+// QR sheet
+const qrOpen = ref(false)
 
 function bestNote(exerciseId) {
   if (!peopleStore.activePersonId) return null
@@ -39,13 +47,27 @@ function handleSaved(payload) {
   recordsStore.addEntry({ personId: peopleStore.activePersonId, ...payload })
 }
 
-function open(id) {
-  router.push(`/plan/${id}/edit`)
-}
-
 function openExerciseHint(item) {
   hintExercise.value = exercisesStore.getById(item.exerciseId)
   hintOpen.value = true
+}
+
+function goEdit() {
+  menuOpen.value = false
+  router.push(`/plan/${workout.value.id}/edit`)
+}
+
+function openQR() {
+  menuOpen.value = false
+  qrOpen.value = true
+}
+
+function deleteWorkout() {
+  menuOpen.value = false
+  if (confirm(`Delete "${workout.value.title}"? This can't be undone.`)) {
+    workoutsStore.removeWorkout(workout.value.id)
+    router.push('/plan')
+  }
 }
 </script>
 
@@ -58,25 +80,19 @@ function openExerciseHint(item) {
   <div v-else class="page">
     <router-link to="/plan" class="back-link">← Workouts</router-link>
 
-    <header class="page-header flex">
-      <div>
-        <h1>{{ workout.title }}</h1>
-      </div>
-      <div>
-        <button class="action-btn edit-btn" @click="open(workout.id)" aria-label="Edit Workout">
-          <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-          </svg>
-        </button>
-      </div>
+    <header class="page-header">
+      <h1>{{ workout.title }}</h1>
+      <!-- 3-dot menu button -->
+      <button class="dots-btn" @click="menuOpen = true" aria-label="Workout options">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+        </svg>
+      </button>
     </header>
 
     <div v-if="workout.items.length === 0" class="empty-state">
       This workout is empty.
-      <router-link class="accent-link" :to="{ name: 'edit-plan', params: { id: workout.id } }"
-        aria-label="Edit Workout">
+      <router-link class="accent-link" :to="{ name: 'edit-plan', params: { id: workout.id } }">
         Add exercises here.
       </router-link>
     </div>
@@ -101,13 +117,45 @@ function openExerciseHint(item) {
           </div>
         </div>
         <div class="plan-actions">
-          <button v-if="peopleStore.activePersonId" class="btn log-btn" @click="openLog(item)"
-            aria-label="Add a PR for item.exerciseName">+ PR</button>
+          <button v-if="peopleStore.activePersonId" class="btn log-btn" @click="openLog(item)">+ PR</button>
         </div>
       </li>
     </ul>
 
+    <!-- PR Form -->
     <PRNewForm v-model="formOpen" :initial-exercise="logExercise" @saved="handleSaved" />
+
+    <!-- QR Sheet -->
+    <WorkoutQRSheet v-model="qrOpen" :workout="workout" />
+
+    <!-- 3-dot menu sheet -->
+    <div v-if="menuOpen" class="overlay" @click.self="menuOpen = false">
+      <div class="sheet menu-sheet">
+        <button class="menu-item" @click="goEdit">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Edit workout
+        </button>
+        <button class="menu-item" @click="openQR">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+            <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/>
+          </svg>
+          Share / Scan QR
+        </button>
+        <button class="menu-item danger" @click="deleteWorkout">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+            <path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+          </svg>
+          Delete workout
+        </button>
+        <button class="menu-cancel" @click="menuOpen = false">Cancel</button>
+      </div>
+    </div>
 
     <!-- Exercise hint sheet -->
     <div v-if="hintOpen && hintExercise" class="overlay" @click.self="hintOpen = false">
@@ -116,14 +164,10 @@ function openExerciseHint(item) {
           <h3 class="sheet-title">{{ hintExercise.name }}</h3>
           <button class="close-btn" @click="hintOpen = false" aria-label="Close">×</button>
         </header>
-
-        <!-- Images -->
         <div v-if="hintExercise.images?.length" class="image-row">
           <img v-for="(img, i) in hintExercise.images" :key="i" :src="IMAGE_BASE + img"
             :alt="`${hintExercise.name} step ${i + 1}`" class="hint-img" loading="lazy" />
         </div>
-
-        <!-- Instructions -->
         <ol class="instructions">
           <li v-for="(step, i) in hintExercise.instructions" :key="i" class="step">
             <span class="step-num">{{ i + 1 }}</span>
@@ -145,42 +189,33 @@ function openExerciseHint(item) {
 }
 
 .page-header {
-  margin-bottom: 16px;
-}
-
-.page-header.flex {
   display: flex;
-  flex-direction: row;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: flex-end;
-}
-
-.subtitle {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--color-text-dim);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .page-header h1 {
   font-size: 28px;
   margin-top: 2px;
   text-transform: capitalize;
+  flex: 1;
 }
 
-.action-btn {
+.dots-btn {
   background: none;
   border: none;
-  line-height: 1;
-  padding: 4px 6px;
-  border-radius: 6px;
+  color: var(--color-text-dim);
+  padding: 4px;
+  margin-top: 6px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  border-radius: 6px;
 }
 
-.edit-btn {
-  color: var(--color-steel);
-}
+.dots-btn:hover { color: var(--color-text); }
 
 .empty-state {
   margin-top: 24px;
@@ -189,9 +224,7 @@ function openExerciseHint(item) {
   line-height: 1.5;
 }
 
-.accent-link {
-  color: var(--color-accent);
-}
+.accent-link { color: var(--color-accent); }
 
 .plan-list {
   list-style: none;
@@ -263,12 +296,7 @@ function openExerciseHint(item) {
   color: var(--color-text-dim);
 }
 
-.plan-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
+.plan-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 
 .log-btn {
   padding: 6px 12px;
@@ -278,7 +306,7 @@ function openExerciseHint(item) {
   border: none;
 }
 
-/* ── Hint sheet ── */
+/* ── Overlay / sheet ── */
 .overlay {
   position: fixed;
   inset: 0;
@@ -301,6 +329,40 @@ function openExerciseHint(item) {
   gap: 16px;
 }
 
+/* ── 3-dot menu sheet ── */
+.menu-sheet { gap: 4px; }
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: 15px;
+  font-family: var(--font-body);
+  padding: 14px 12px;
+  border-radius: var(--radius);
+  text-align: left;
+}
+
+.menu-item:hover { background: var(--color-surface-2); }
+.menu-item.danger { color: var(--color-danger); }
+
+.menu-cancel {
+  width: 100%;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  border-radius: var(--radius);
+  padding: 12px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  margin-top: 6px;
+}
+
+/* ── Hint sheet ── */
 .sheet-header {
   display: flex;
   align-items: flex-start;
@@ -308,11 +370,7 @@ function openExerciseHint(item) {
   gap: 12px;
 }
 
-.sheet-title {
-  font-size: 16px;
-  line-height: 1.3;
-  flex: 1;
-}
+.sheet-title { font-size: 16px; line-height: 1.3; flex: 1; }
 
 .close-btn {
   background: none;
@@ -323,13 +381,7 @@ function openExerciseHint(item) {
   flex-shrink: 0;
 }
 
-/* ── Images ── */
-.image-row {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  flex-shrink: 0;
-}
+.image-row { display: flex; gap: 10px; overflow-x: auto; flex-shrink: 0; }
 
 .hint-img {
   height: 160px;
@@ -341,7 +393,6 @@ function openExerciseHint(item) {
   object-fit: cover;
 }
 
-/* ── Instructions ── */
 .instructions {
   list-style: none;
   margin: 0;
@@ -351,11 +402,7 @@ function openExerciseHint(item) {
   gap: 10px;
 }
 
-.step {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
+.step { display: flex; gap: 12px; align-items: flex-start; }
 
 .step-num {
   font-family: var(--font-mono);
@@ -367,10 +414,5 @@ function openExerciseHint(item) {
   padding-top: 2px;
 }
 
-.step-text {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--color-text);
-}
+.step-text { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-text); }
 </style>

@@ -6,13 +6,16 @@
   "homepage": "https://cageycoyote.github.io/lift-pr-tracker/",
   "scripts": {
     "dev": "vite",
+    "dev-host": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist",
     "build-deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
+    "@zxing/browser": "^0.2.0",
     "pinia": "^2.1.7",
+    "qrcode": "^1.5.4",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"
   },

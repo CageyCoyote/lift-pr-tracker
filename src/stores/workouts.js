@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { load, save } from '../utils/storage'
 import { useExercisesStore } from './exercises'
-import exerciseList from '../data/new-exercises.json'
+import exerciseList from '../data/exercises.json'
 
 // One-time migration: remap old slug-based exerciseIds (e.g. 'Barbell_Bench_Press_-_Medium_Grip')
 // to new short IDs (e.g. 'ex_002S'). Uses oldExId field as the bridge.
@@ -96,7 +96,24 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     }
   }
 
-  // Unique primary muscles across every exercise in the workout.
+  // Import a workout from a scanned QR payload { v, title, items }
+  function importWorkout(payload) {
+    const now = new Date().toISOString()
+    const workout = {
+      id: crypto.randomUUID(),
+      shareId: null,
+      title: payload.title?.trim() || 'Imported Workout',
+      items: (payload.items ?? []).map(i => ({
+        id: crypto.randomUUID(),
+        exerciseId: i.exerciseId,
+        exerciseName: i.exerciseName
+      })),
+      createdAt: now,
+      updatedAt: now,
+    }
+    workouts.value.push(workout)
+    return workout
+  }
   // Secondary muscles are filtered to exclude any that appear in the primary set.
   function targetedMuscles(workoutId) {
     const exercisesStore = useExercisesStore()
@@ -128,6 +145,7 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     workouts,
     getWorkout,
     createWorkout,
+    importWorkout,
     removeWorkout,
     renameWorkout,
     addExercise,

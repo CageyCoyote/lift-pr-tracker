@@ -21,9 +21,9 @@ export default defineConfig({
         scope:  process.env.VUE_APP_BASE_URL || '/',
         icons: [
           {
-            src: 'icons/icon.svg',
+            src: 'icons/image.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any'
           },
           {
@@ -43,7 +43,7 @@ export default defineConfig({
         enabled: true
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,json,svg,png,ico,map}'],
+        globPatterns: ['**/*.{js,css,html,json,png,ico,map}'],
         sourcemap: true
       }
     })

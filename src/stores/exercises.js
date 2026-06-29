@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import rawExercises from '../data/exercises.json'
+import rawExercises from '../data/new-exercises.json'
 
 export const useExercisesStore = defineStore('exercises', () => {
   const list = ref(rawExercises)

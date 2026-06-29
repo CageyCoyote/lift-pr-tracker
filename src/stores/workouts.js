@@ -2,10 +2,42 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { load, save } from '../utils/storage'
 import { useExercisesStore } from './exercises'
+import exerciseList from '../data/new-exercises.json'
 
-// Workout: { id, title, items: [{ id, exerciseId, exerciseName }] }
+// One-time migration: remap old slug-based exerciseIds (e.g. 'Barbell_Bench_Press_-_Medium_Grip')
+// to new short IDs (e.g. 'ex_002S'). Uses oldExId field as the bridge.
+// Safe to run on every boot — skips items already on the new scheme.
+function buildOldToNewMap() {
+  const map = {}
+  for (const ex of exerciseList) {
+    if (ex.oldExId && ex.id) map[ex.oldExId] = ex.id
+  }
+  return map
+}
+
+function migrateExerciseIds(workoutList) {
+  const oldToNew = buildOldToNewMap()
+  let migrated = 0
+
+  for (const workout of workoutList) {
+    for (const item of workout.items ?? []) {
+      if (oldToNew[item.exerciseId]) {
+        item.exerciseId = oldToNew[item.exerciseId]
+        migrated++
+      }
+    }
+  }
+
+  if (migrated > 0) {
+    console.info(`[workouts] Remapped ${migrated} exercise ID(s) to new scheme.`)
+  }
+  return workoutList
+}
+
+// Workout: { id, shareId, title, items: [{ id, exerciseId, exerciseName }], createdAt, updatedAt }
 export const useWorkoutsStore = defineStore('workouts', () => {
-  const workouts = ref(load('workouts', []))
+  const raw = load('workouts', [])
+  const workouts = ref(migrateExerciseIds(raw))
 
   watch(workouts, (v) => save('workouts', v), { deep: true })
 
@@ -14,22 +46,13 @@ export const useWorkoutsStore = defineStore('workouts', () => {
   }
 
   function createWorkout(title) {
-    const now = new Date().toISOString()
     const workout = {
       id: crypto.randomUUID(),
-      shareId: null,          // populated when user shares via QR
       title: title?.trim() || 'Untitled Workout',
-      items: [],
-      createdAt: now,
-      updatedAt: now,
+      items: []
     }
     workouts.value.push(workout)
     return workout
-  }
-
-  function touch(id) {
-    const w = getWorkout(id)
-    if (w) w.updatedAt = new Date().toISOString()
   }
 
   function removeWorkout(id) {
@@ -38,24 +61,19 @@ export const useWorkoutsStore = defineStore('workouts', () => {
 
   function renameWorkout(id, title) {
     const w = getWorkout(id)
-    if (w && title?.trim()) {
-      w.title = title.trim()
-      touch(id)
-    }
+    if (w && title?.trim()) w.title = title.trim()
   }
 
   function addExercise(workoutId, exercise) {
     const w = getWorkout(workoutId)
     if (!w) return
     w.items.push({ id: crypto.randomUUID(), exerciseId: exercise.id, exerciseName: exercise.name })
-    touch(workoutId)
   }
 
   function removeItem(workoutId, itemId) {
     const w = getWorkout(workoutId)
     if (!w) return
     w.items = w.items.filter((i) => i.id !== itemId)
-    touch(workoutId)
   }
 
   function moveUp(workoutId, itemId) {
@@ -65,7 +83,6 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     if (i > 0) {
       const [item] = w.items.splice(i, 1)
       w.items.splice(i - 1, 0, item)
-      touch(workoutId)
     }
   }
 
@@ -76,7 +93,6 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     if (i !== -1 && i < w.items.length - 1) {
       const [item] = w.items.splice(i, 1)
       w.items.splice(i + 1, 0, item)
-      touch(workoutId)
     }
   }
 
@@ -118,7 +134,6 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     removeItem,
     moveUp,
     moveDown,
-    touch,
     targetedMuscles
   }
 })

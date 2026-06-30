@@ -6,7 +6,7 @@ import WorkoutDetailView from '../views/workouts/WorkoutDetailView .vue'
 import PeopleView from '../views/people/PeopleView.vue'
 import ExerciseLibraryView from '../views/library/ExerciseLibraryView.vue'
 import ExerciseDetailView from '../views/library/ExerciseDetailView.vue'
-import AccountView from '../views/AccountView.vue'
+import AccountView from '../views/account/AccountView.vue'
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.VUE_APP_BASE_URL || ''),

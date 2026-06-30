@@ -1,8 +1,8 @@
 <script setup>
-import { useSettingsStore, ICON_COLORS } from '../stores/settings'
-import { useRecordsStore } from '../stores/records'
-import { useWorkoutsStore } from '../stores/workouts'
-import { usePeopleStore } from '../stores/people'
+import { useSettingsStore, ICON_COLORS } from '../../stores/settings'
+import { useRecordsStore } from '../../stores/records'
+import { useWorkoutsStore } from '../../stores/workouts'
+import { usePeopleStore } from '../../stores/people'
 
 const settingsStore = useSettingsStore()
 const recordsStore = useRecordsStore()
@@ -72,7 +72,6 @@ function exportWorkouts() {
         >
           <span class="swatch-dot" />
           <span class="swatch-label">{{ c.label }}</span>
-          <span v-if="settingsStore.iconColor === c.hex" class="swatch-check">✓</span>
         </button>
       </div>
     </section>

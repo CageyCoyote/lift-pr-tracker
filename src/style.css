@@ -1,18 +1,18 @@
 :root {
   /* Brand Colors */
-  --color-accent: #c9a227; /* brass — denotes a PR / best lift */
+  --color-accent: #c9a227; /* Energy — primary actions / denotes a PR / best lift */
   --color-bg: #15161a;
-  --color-steel: #5b7a8c; /* secondary actions */
+  --color-steel: #5b7a8c; /* Steel - secondary actions */
   /* Secondary Colors */
   --color-accent-dim: #8a701c;
   --color-surface: #1e2024;
   --color-surface-2: #26292e;
   /* Color tokens */
-  --color-border: #34373d;
-  --color-text: #ece9e2;
+  --color-border: #34373d; /* Stealth - borders / backgrounds */
+  --color-text: #ece9e2; /* - Chalk - text color */
   --color-text-dim: #9a9ca3;
-  --color-danger: #c1443c;
-  --color-green: #4a9e6b;
+  --color-danger: #c1443c; /* Pump - danger / hard difficulty */
+  --color-green: #4a9e6b; /* Recovery - easy difficulty */
 
   /* Type tokens */
   --font-display: "Oswald", sans-serif;

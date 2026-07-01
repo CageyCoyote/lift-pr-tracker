@@ -21,7 +21,7 @@ watch(
   (open) => {
     if (open) {
       // New entry mode
-      exercise.value = props.initialExercise || null
+      exercise.value = null
       step.value = exercise.value ? 'entry' : 'pick'
       weight.value = ''
       reps.value = ''

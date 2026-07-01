@@ -1,7 +1,6 @@
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
 import QRCode from 'qrcode'
-import { BrowserQRCodeReader } from '@zxing/browser'
 import { useWorkoutsStore } from '../../stores/workouts'
 
 const props = defineProps({
@@ -21,6 +20,8 @@ const scanError = ref(null)
 const scanResult = ref(null) // parsed workout payload
 const scanning = ref(false)
 const videoRef = ref(null)
+const availableCameras = ref([])
+const currentCameraIndex = ref(0)
 let codeReader = null
 let streamRef = null
 
@@ -38,9 +39,10 @@ async function generateQR() {
       }))
     })
     qrDataUrl.value = await QRCode.toDataURL(payload, {
-      width: 280,
-      margin: 2,
-      color: { dark: '#ece9e2', light: '#1e2024' }
+      width: 325,
+      margin: 1,
+      errorCorrectionLevel: 'H',
+      color: { dark: '#000', light: '#fff' }
     })
   } catch (e) {
     qrError.value = 'Failed to generate QR code.'
@@ -56,16 +58,38 @@ async function startScan() {
   scanning.value = true
 
   try {
+    // Lazy-loaded — keeps @zxing/library (large, WASM-backed) out of the main
+    // bundle. Only fetched the first time a user actually opens the camera.
+    const { BrowserQRCodeReader } = await import('@zxing/browser')
     codeReader = new BrowserQRCodeReader()
-    const devices = await BrowserQRCodeReader.listVideoInputDevices()
-    const deviceId = devices[devices.length - 1]?.deviceId // prefer rear camera
 
-    await codeReader.decodeFromVideoDevice(deviceId, videoRef.value, (result, err) => {
-      if (result) {
-        handleScanResult(result.getText())
-      }
-    })
+    const devices = await BrowserQRCodeReader.listVideoInputDevices()
+    availableCameras.value = devices
+    if (devices.length === 0) {
+      stopScan()
+      scanError.value = "No Camera Devices"
+      scanning.value = false
+      console.error(e)
+    }
+    if (availableCameras.value.length > 0 && currentCameraIndex.value === 0) {
+      const rearCamera = devices.findIndex(d =>
+        d.label.toLowerCase().includes('back') ||
+        d.label.toLowerCase().includes('rear') ||
+        d.label.toLowerCase().includes('environment')
+      )
+      currentCameraIndex.value = rearCamera !== -1 ? rearCamera : devices.length - 1
+    }
+
+    const selectedDevice = availableCameras.value[currentCameraIndex.value]
+    const deviceId = selectedDevice?.deviceId
+
+    // Promise form — resolves once on first successful decode, no continuous callback.
+    // The callback form keeps firing even after codeReader.reset(), causing the log loop.
+    const result = await codeReader.decodeOnceFromVideoDevice(deviceId, videoRef.value)
+    handleScanResult(result.getText())
   } catch (e) {
+    // NotFoundException fires on every frame with no QR — suppress it
+    if (e?.name === 'NotFoundException') return
     scanError.value = 'Camera unavailable. Check permissions and try again.'
     scanning.value = false
     console.error(e)
@@ -88,14 +112,30 @@ function handleScanResult(text) {
 
 function stopScan() {
   scanning.value = false
+
   try {
     codeReader?.reset()
-    // Kill camera stream to turn off the camera light
     if (streamRef) {
       streamRef.getTracks().forEach(t => t.stop())
       streamRef = null
     }
   } catch { /* ignore */ }
+}
+
+async function switchCamera() {
+  if (availableCameras.value.length <= 1) {
+    scanError.value = 'No other camera available'
+    return
+  }
+
+  stopScan()
+
+  // Cycle to next camera
+  currentCameraIndex.value = (currentCameraIndex.value + 1) % availableCameras.value.length
+
+  // Small delay so the previous stream fully stops
+  await new Promise(r => setTimeout(r, 300))
+  startScan()
 }
 
 function importWorkout() {
@@ -147,26 +187,21 @@ function close() {
 
       <!-- Tabs -->
       <div class="tabs">
-        <button
-          v-if="workout"
-          class="tab"
-          :class="{ active: tab === 'share' }"
-          @click="tab = 'share'"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/>
+        <button v-if="workout" class="tab" :class="{ active: tab === 'share' }" @click="tab = 'share'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01" />
           </svg>
           Share
         </button>
-        <button
-          class="tab"
-          :class="{ active: tab === 'scan' }"
-          @click="tab = 'scan'"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
+        <button class="tab" :class="{ active: tab === 'scan' }" @click="tab = 'scan'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+            <line x1="3" y1="12" x2="21" y2="12" />
           </svg>
           Scan
         </button>
@@ -189,8 +224,9 @@ function close() {
         <!-- Preview of scanned workout -->
         <div v-if="scanResult" class="scan-preview">
           <div class="preview-header">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
             <span class="preview-title">{{ scanResult.title }}</span>
           </div>
@@ -216,16 +252,21 @@ function close() {
           <div v-if="scanError" class="scan-error">{{ scanError }}</div>
 
           <button v-if="!scanning" class="btn btn-accent scan-btn" @click="startScan">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
-              <line x1="3" y1="12" x2="21" y2="12"/>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path
+                d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+              <line x1="3" y1="12" x2="21" y2="12" />
             </svg>
             Start Camera
           </button>
-          <button v-else class="btn scan-btn" @click="stopScan">Stop</button>
+          <button v-if="availableCameras.length > 1 && scanning" class="btn camera-switch-btn" @click="switchCamera"
+            title="Switch Camera">
+            change camera
+          </button>
+          <button v-if="scanning" class="btn scan-btn" @click="stopScan">Stop</button>
         </template>
       </div>
-
     </div>
   </div>
 </template>
@@ -259,7 +300,9 @@ function close() {
   justify-content: space-between;
 }
 
-.sheet-header h3 { font-size: 16px; }
+.sheet-header h3 {
+  font-size: 16px;
+}
 
 .close-btn {
   background: none;
@@ -318,8 +361,8 @@ function close() {
 }
 
 .qr-img {
-  width: 240px;
-  height: 240px;
+  width: 325px;
+  height: 325px;
   border-radius: var(--radius);
 }
 
@@ -372,8 +415,17 @@ function close() {
 }
 
 @keyframes sweep {
-  0%, 100% { transform: translateY(-60px); opacity: 0.4; }
-  50%       { transform: translateY(60px);  opacity: 0.9; }
+
+  0%,
+  100% {
+    transform: translateY(-60px);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: translateY(60px);
+    opacity: 0.9;
+  }
 }
 
 .scan-btn {

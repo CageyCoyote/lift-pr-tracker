@@ -5,7 +5,7 @@ import { useWorkoutsStore } from '../../stores/workouts'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
-  workout: { type: Object, default: null } // null = open to Scan tab only
+  workout: { type: Object, default: null }
 })
 const emit = defineEmits(['update:modelValue', 'imported'])
 
@@ -17,13 +17,17 @@ const qrError = ref(null)
 
 // Scan state
 const scanError = ref(null)
-const scanResult = ref(null) // parsed workout payload
+const scanResult = ref(null)
 const scanning = ref(false)
 const videoRef = ref(null)
-const availableCameras = ref([])
-const currentCameraIndex = ref(0)
+
+// Camera list — only videoinput devices, populated once on first scan
+const cameras = ref([])
+const cameraIndex = ref(0)
+const hasMultipleCameras = ref(false)
+
 let codeReader = null
-let streamRef = null
+let activeStream = null  // we own the MediaStream lifecycle
 
 // ── Share tab ────────────────────────────────────────────────────────────────
 
@@ -50,7 +54,47 @@ async function generateQR() {
   }
 }
 
-// ── Scan tab ─────────────────────────────────────────────────────────────────
+// ── Camera helpers ────────────────────────────────────────────────────────────
+
+async function loadCameraList() {
+  try {
+    // Brief probe stream needed so enumerateDevices returns labels on all browsers
+    const probe = await navigator.mediaDevices.getUserMedia({ video: true })
+    probe.getTracks().forEach(t => t.stop())
+
+    const all = await navigator.mediaDevices.enumerateDevices()
+    cameras.value = all
+      .filter(d => d.kind === 'videoinput')
+      .map(d => ({ deviceId: d.deviceId, label: d.label || `Camera ${d.deviceId.slice(0, 4)}` }))
+    hasMultipleCameras.value = cameras.value.length > 1
+
+    // Default to rear camera if detectable, otherwise last device (usually rear on mobile)
+    const rearIdx = cameras.value.findIndex(d => /back|rear|environment/i.test(d.label))
+    cameraIndex.value = rearIdx !== -1 ? rearIdx : cameras.value.length - 1
+  } catch {
+    hasMultipleCameras.value = false
+  }
+}
+
+function buildConstraints(deviceId) {
+  const videoConstraints = deviceId
+    ? { deviceId: { exact: deviceId } }
+    : { facingMode: { ideal: 'environment' } }
+
+  return {
+    video: {
+      ...videoConstraints,
+      width:  { ideal: 1280 },
+      height: { ideal: 720  },
+      // focusMode: continuous dramatically helps QR decode on phones that support it;
+      // silently ignored on those that don't
+      advanced: [{ focusMode: 'continuous' }]
+    },
+    audio: false
+  }
+}
+
+// ── Scan ─────────────────────────────────────────────────────────────────────
 
 async function startScan() {
   scanError.value = null
@@ -58,42 +102,51 @@ async function startScan() {
   scanning.value = true
 
   try {
-    // Lazy-loaded — keeps @zxing/library (large, WASM-backed) out of the main
-    // bundle. Only fetched the first time a user actually opens the camera.
+    if (cameras.value.length === 0) await loadCameraList()
+
+    const deviceId = cameras.value[cameraIndex.value]?.deviceId
+    const constraints = buildConstraints(deviceId)
+
+    // Own the stream directly so stopScan can kill it cleanly
+    // independent of whatever zxing does internally
+    activeStream = await navigator.mediaDevices.getUserMedia(constraints)
+    videoRef.value.srcObject = activeStream
+
     const { BrowserQRCodeReader } = await import('@zxing/browser')
     codeReader = new BrowserQRCodeReader()
 
-    const devices = await BrowserQRCodeReader.listVideoInputDevices()
-    availableCameras.value = devices
-    if (devices.length === 0) {
-      stopScan()
-      scanError.value = "No Camera Devices"
-      scanning.value = false
-      console.error(e)
-    }
-    if (availableCameras.value.length > 0 && currentCameraIndex.value === 0) {
-      const rearCamera = devices.findIndex(d =>
-        d.label.toLowerCase().includes('back') ||
-        d.label.toLowerCase().includes('rear') ||
-        d.label.toLowerCase().includes('environment')
-      )
-      currentCameraIndex.value = rearCamera !== -1 ? rearCamera : devices.length - 1
-    }
-
-    const selectedDevice = availableCameras.value[currentCameraIndex.value]
-    const deviceId = selectedDevice?.deviceId
-
-    // Promise form — resolves once on first successful decode, no continuous callback.
-    // The callback form keeps firing even after codeReader.reset(), causing the log loop.
-    const result = await codeReader.decodeOnceFromVideoDevice(deviceId, videoRef.value)
+    const result = await codeReader.decodeOnceFromConstraints(constraints, videoRef.value)
     handleScanResult(result.getText())
   } catch (e) {
-    // NotFoundException fires on every frame with no QR — suppress it
     if (e?.name === 'NotFoundException') return
-    scanError.value = 'Camera unavailable. Check permissions and try again.'
+    if (e?.name === 'NotAllowedError') {
+      scanError.value = 'Camera permission denied. Allow camera access and try again.'
+    } else if (e?.name === 'NotFoundError') {
+      scanError.value = 'No camera found on this device.'
+    } else {
+      scanError.value = 'Camera unavailable. Check permissions and try again.'
+    }
     scanning.value = false
     console.error(e)
   }
+}
+
+function stopScan() {
+  scanning.value = false
+  try { codeReader?.reset() } catch { /* ignore */ }
+  try {
+    activeStream?.getTracks().forEach(t => t.stop())
+    activeStream = null
+    if (videoRef.value) videoRef.value.srcObject = null
+  } catch { /* ignore */ }
+}
+
+async function switchCamera() {
+  if (!hasMultipleCameras.value) return
+  stopScan()
+  cameraIndex.value = (cameraIndex.value + 1) % cameras.value.length
+  await new Promise(r => setTimeout(r, 200))
+  startScan()
 }
 
 function handleScanResult(text) {
@@ -110,34 +163,6 @@ function handleScanResult(text) {
   }
 }
 
-function stopScan() {
-  scanning.value = false
-
-  try {
-    codeReader?.reset()
-    if (streamRef) {
-      streamRef.getTracks().forEach(t => t.stop())
-      streamRef = null
-    }
-  } catch { /* ignore */ }
-}
-
-async function switchCamera() {
-  if (availableCameras.value.length <= 1) {
-    scanError.value = 'No other camera available'
-    return
-  }
-
-  stopScan()
-
-  // Cycle to next camera
-  currentCameraIndex.value = (currentCameraIndex.value + 1) % availableCameras.value.length
-
-  // Small delay so the previous stream fully stops
-  await new Promise(r => setTimeout(r, 300))
-  startScan()
-}
-
 function importWorkout() {
   if (!scanResult.value) return
   const w = workoutsStore.importWorkout(scanResult.value)
@@ -145,7 +170,7 @@ function importWorkout() {
   close()
 }
 
-// ── Lifecycle ────────────────────────────────────────────────────────────────
+// ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 watch(() => props.modelValue, (open) => {
   if (open) {
@@ -162,10 +187,7 @@ watch(() => props.modelValue, (open) => {
 
 watch(tab, (t) => {
   if (t === 'share' && !qrDataUrl.value) generateQR()
-  if (t === 'scan') {
-    scanResult.value = null
-    scanError.value = null
-  }
+  if (t === 'scan') { scanResult.value = null; scanError.value = null }
   if (t !== 'scan') stopScan()
 })
 
@@ -247,24 +269,32 @@ function close() {
           <div class="video-wrap">
             <video ref="videoRef" class="video" autoplay muted playsinline />
             <div class="scan-line" />
+            <!-- Switch button overlaid top-right, only when multiple cameras confirmed -->
+            <button
+              v-if="hasMultipleCameras && scanning"
+              class="switch-overlay-btn"
+              @click="switchCamera"
+              aria-label="Switch camera"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </button>
           </div>
 
           <div v-if="scanError" class="scan-error">{{ scanError }}</div>
 
-          <button v-if="!scanning" class="btn btn-accent scan-btn" @click="startScan">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path
-                d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-            </svg>
-            Start Camera
-          </button>
-          <button v-if="availableCameras.length > 1 && scanning" class="btn camera-switch-btn" @click="switchCamera"
-            title="Switch Camera">
-            change camera
-          </button>
-          <button v-if="scanning" class="btn scan-btn" @click="stopScan">Stop</button>
+          <div class="scan-btns">
+            <button v-if="!scanning" class="btn btn-accent scan-btn" @click="startScan">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+              </svg>
+              Start Camera
+            </button>
+            <button v-if="scanning" class="btn scan-btn" @click="stopScan">Cancel</button>
+          </div>
         </template>
       </div>
     </div>
@@ -390,7 +420,7 @@ function close() {
 .video-wrap {
   position: relative;
   width: 100%;
-  max-width: 320px;
+  max-width: 485px;
   aspect-ratio: 1;
   border-radius: var(--radius);
   overflow: hidden;
@@ -405,32 +435,47 @@ function close() {
 
 .scan-line {
   position: absolute;
-  left: 12%;
-  right: 12%;
+  left: 8%;
+  right: 8%;
   top: 50%;
   height: 2px;
   background: var(--color-accent);
   opacity: 0.8;
   animation: sweep 2s ease-in-out infinite;
+  pointer-events: none;
 }
 
 @keyframes sweep {
+  0%, 100% { transform: translateY(-80px); opacity: 0.4; }
+  50%       { transform: translateY(80px);  opacity: 0.9; }
+}
 
-  0%,
-  100% {
-    transform: translateY(-60px);
-    opacity: 0.4;
-  }
+/* Camera switch button — overlaid top-right corner of the viewfinder */
+.switch-overlay-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
 
-  50% {
-    transform: translateY(60px);
-    opacity: 0.9;
-  }
+.scan-btns {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .scan-btn {
   width: 100%;
-  max-width: 320px;
   display: flex;
   align-items: center;
   justify-content: center;

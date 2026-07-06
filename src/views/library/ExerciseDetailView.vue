@@ -63,7 +63,7 @@ function handleSaved(payload) {
   <div v-else class="page">
 
     <!-- Back -->
-    <router-link to="/library" class="back-link">← Library</router-link>
+    <button class="back-link" @click="router.back()">← Library</button>
 
     <!-- Title + level -->
     <header class="detail-header">
@@ -170,6 +170,7 @@ function handleSaved(payload) {
 }
 
 .back-link {
+  all: unset;
   display: inline-block;
   color: var(--color-text-dim);
   text-decoration: none;

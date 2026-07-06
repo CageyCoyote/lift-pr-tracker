@@ -92,16 +92,16 @@ function toggleSearch() {
         />
         <div class="filter-row">
           <select :value="equipment" @change="setParam('equipment', $event.target.value)">
-            <option value="">All equipment</option>
-            <option v-for="e in exercisesStore.equipmentOptions" :key="e" :value="e">{{ e }}</option>
+            <option class="capitalize" value="">All equipment</option>
+            <option class="capitalize" v-for="e in exercisesStore.equipmentOptions" :key="e" :value="e">{{ e }}</option>
           </select>
           <select :value="muscle" @change="setParam('muscle', $event.target.value)">
-            <option value="">All muscles</option>
-            <option v-for="m in exercisesStore.muscleOptions" :key="m" :value="m">{{ m }}</option>
+            <option class="capitalize" value="">All muscles</option>
+            <option class="capitalize" v-for="m in exercisesStore.muscleOptions" :key="m" :value="m">{{ m }}</option>
           </select>
           <select :value="category" @change="setParam('category', $event.target.value)">
-            <option value="">Any category</option>
-            <option v-for="c in exercisesStore.categoryOptions" :key="c" :value="c">{{ c }}</option>
+            <option class="capitalize" value="">Any category</option>
+            <option class="capitalize" v-for="c in exercisesStore.categoryOptions" :key="c" :value="c">{{ c }}</option>
           </select>
         </div>
         <p v-if="hasFilters" class="result-count">{{ exercises.length }} result{{ exercises.length === 1 ? '' : 's' }}</p>
@@ -159,6 +159,10 @@ function toggleSearch() {
 
 .search-input {
   width: 100%;
+}
+
+.capitalize {
+  text-transform: capitalize;
 }
 
 .filter-row {

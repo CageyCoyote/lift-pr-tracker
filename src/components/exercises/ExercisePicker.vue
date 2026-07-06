@@ -19,12 +19,12 @@ const results = computed(() =>
     <input v-model="query" type="text" placeholder="Search exercises…" class="search-input" />
     <div class="filters">
       <select v-model="equipment">
-        <option value="">All equipment</option>
-        <option v-for="e in exercisesStore.equipmentOptions" :key="e" :value="e">{{ e }}</option>
+        <option class="capitalize" value="">All equipment</option>
+        <option class="capitalize" v-for="e in exercisesStore.equipmentOptions" :key="e" :value="e">{{ e }}</option>
       </select>
       <select v-model="muscle">
-        <option value="">All muscles</option>
-        <option v-for="m in exercisesStore.muscleOptions" :key="m" :value="m">{{ m }}</option>
+        <option class="capitalize" value="">All muscles</option>
+        <option class="capitalize" v-for="m in exercisesStore.muscleOptions" :key="m" :value="m">{{ m }}</option>
       </select>
     </div>
 
@@ -58,6 +58,11 @@ const results = computed(() =>
 
 .filters select {
   flex: 1;
+  text-transform: capitalize;
+}
+
+.capitalize {
+  text-transform: capitalize;
 }
 
 .results {

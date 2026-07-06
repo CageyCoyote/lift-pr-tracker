@@ -2,6 +2,7 @@
 import { ref, watch, onUnmounted } from 'vue'
 import QRCode from 'qrcode'
 import { useWorkoutsStore } from '../../stores/workouts'
+import { useExercisesStore } from '../../stores/exercises'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -10,47 +11,93 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'imported'])
 
 const workoutsStore = useWorkoutsStore()
+const exercisesStore = useExercisesStore()
 
 const tab = ref(props.workout ? 'share' : 'scan')
 const qrDataUrl = ref(null)
 const qrError = ref(null)
 
-// Scan state
 const scanError = ref(null)
 const scanResult = ref(null)
 const scanning = ref(false)
 const videoRef = ref(null)
 
-// Camera list — only videoinput devices, populated once on first scan
 const cameras = ref([])
 const cameraIndex = ref(0)
 const hasMultipleCameras = ref(false)
 
+// Single source of truth for the active zxing reader.
+// Kept module-level so stopScan can always reach it regardless of call site.
 let codeReader = null
-let activeStream = null  // we own the MediaStream lifecycle
 
-// ── Share tab ────────────────────────────────────────────────────────────────
+// Max exercises encodable at QR level L before the code becomes unreliable.
+// At ~10 bytes per ID this keeps the payload comfortably under 200 bytes.
+const MAX_EXERCISES = 20
+
+// ── Encode / Decode ───────────────────────────────────────────────────────────
+
+function encodePayload(workout) {
+  const title = workout.title?.trim() ?? ''
+  if (!title) throw new Error('Workout has no title')
+
+  const items = workout.items.slice(0, MAX_EXERCISES)
+  const ids = items.map(i => i.exerciseId).join(',')
+
+  // Sanitise: strip characters that could break the colon-delimited format.
+  // Colons in titles are fine (we use lastIndexOf), but newlines/nulls are not.
+  const safeTitle = title.replace(/[\r\n\x00]/g, ' ')
+
+  return `PRK:1:${safeTitle}:${ids}`
+}
+
+function decodePayload(text) {
+  const PREFIX = 'PRK:1:'
+  if (typeof text !== 'string' || !text.startsWith(PREFIX)) {
+    return { error: 'QR code is not a valid PR Tracker workout.' }
+  }
+
+  const body = text.slice(PREFIX.length)
+
+  // Split on the LAST colon — IDs live at the end, titles may contain colons.
+  const colonIdx = body.lastIndexOf(':')
+  if (colonIdx === -1) return { error: 'Malformed workout QR code.' }
+
+  const title = body.slice(0, colonIdx).trim()
+  if (!title) return { error: 'Workout QR code has no title.' }
+
+  const idString = body.slice(colonIdx + 1)
+  const ids = idString ? idString.split(',').filter(id => id.trim()) : []
+
+  const items = ids.map(id => {
+    const clean = id.trim()
+    const ex = exercisesStore.getById(clean)
+    return {
+      exerciseId: clean,
+      exerciseName: ex?.name ?? `Unknown exercise (${clean})`
+    }
+  })
+
+  return { payload: { v: 1, title, items } }
+}
+
+// ── Share tab ─────────────────────────────────────────────────────────────────
 
 async function generateQR() {
   if (!props.workout) return
+  qrError.value = null
+  qrDataUrl.value = null
+
   try {
-    const payload = JSON.stringify({
-      v: 1,
-      title: props.workout.title,
-      items: props.workout.items.map(i => ({
-        exerciseId: i.exerciseId,
-        exerciseName: i.exerciseName
-      }))
-    })
-    qrDataUrl.value = await QRCode.toDataURL(payload, {
+    const text = encodePayload(props.workout)
+    qrDataUrl.value = await QRCode.toDataURL(text, {
       width: 325,
-      margin: 1,
-      errorCorrectionLevel: 'H',
+      margin: 2,
+      errorCorrectionLevel: 'L',
       color: { dark: '#000', light: '#fff' }
     })
   } catch (e) {
-    qrError.value = 'Failed to generate QR code.'
-    console.error(e)
+    qrError.value = e.message ?? 'Failed to generate QR code.'
+    console.error('[QR generate]', e)
   }
 }
 
@@ -58,17 +105,15 @@ async function generateQR() {
 
 async function loadCameraList() {
   try {
-    // Brief probe stream needed so enumerateDevices returns labels on all browsers
     const probe = await navigator.mediaDevices.getUserMedia({ video: true })
     probe.getTracks().forEach(t => t.stop())
 
     const all = await navigator.mediaDevices.enumerateDevices()
     cameras.value = all
       .filter(d => d.kind === 'videoinput')
-      .map(d => ({ deviceId: d.deviceId, label: d.label || `Camera ${d.deviceId.slice(0, 4)}` }))
+      .map(d => ({ deviceId: d.deviceId, label: d.label || `Camera ${d.deviceId.slice(0, 6)}` }))
     hasMultipleCameras.value = cameras.value.length > 1
 
-    // Default to rear camera if detectable, otherwise last device (usually rear on mobile)
     const rearIdx = cameras.value.findIndex(d => /back|rear|environment/i.test(d.label))
     cameraIndex.value = rearIdx !== -1 ? rearIdx : cameras.value.length - 1
   } catch {
@@ -86,17 +131,38 @@ function buildConstraints(deviceId) {
       ...videoConstraints,
       width:  { ideal: 1280 },
       height: { ideal: 720  },
-      // focusMode: continuous dramatically helps QR decode on phones that support it;
-      // silently ignored on those that don't
       advanced: [{ focusMode: 'continuous' }]
     },
     audio: false
   }
 }
 
-// ── Scan ─────────────────────────────────────────────────────────────────────
+// ── Scan ──────────────────────────────────────────────────────────────────────
+
+// Stops the camera and zxing reader completely.
+// Safe to call multiple times — idempotent.
+function stopScan() {
+  scanning.value = false
+
+  // Reset zxing first — this stops its internal decode loop and releases
+  // the stream it opened via decodeOnceFromConstraints.
+  if (codeReader) {
+    try { codeReader.reset() } catch { /* ignore */ }
+    codeReader = null
+  }
+
+  // Null out the video srcObject so the browser releases the camera indicator.
+  if (videoRef.value) {
+    try {
+      videoRef.value.srcObject = null
+    } catch { /* ignore */ }
+  }
+}
 
 async function startScan() {
+  // Guard: don't stack streams if called while already scanning
+  if (scanning.value) return
+
   scanError.value = null
   scanResult.value = null
   scanning.value = true
@@ -107,60 +173,59 @@ async function startScan() {
     const deviceId = cameras.value[cameraIndex.value]?.deviceId
     const constraints = buildConstraints(deviceId)
 
-    // Own the stream directly so stopScan can kill it cleanly
-    // independent of whatever zxing does internally
-    activeStream = await navigator.mediaDevices.getUserMedia(constraints)
-    videoRef.value.srcObject = activeStream
-
     const { BrowserQRCodeReader } = await import('@zxing/browser')
+
+    // Check we're still supposed to be scanning — user may have cancelled
+    // during the async import() above
+    if (!scanning.value) return
+
     codeReader = new BrowserQRCodeReader()
 
+    // decodeOnceFromConstraints manages its own stream internally.
+    // We do NOT open a separate getUserMedia stream — doing both causes
+    // duplicate streams and makes stopScan unreliable.
     const result = await codeReader.decodeOnceFromConstraints(constraints, videoRef.value)
+
+    // Guard: result could arrive after user cancelled
+    if (!scanning.value) return
+
     handleScanResult(result.getText())
   } catch (e) {
-    if (e?.name === 'NotFoundException') return
+    // NotFoundException = no QR in frame, fired on decode timeout — not an error
+    if (e?.name === 'NotFoundException') {
+      scanning.value = false
+      return
+    }
     if (e?.name === 'NotAllowedError') {
       scanError.value = 'Camera permission denied. Allow camera access and try again.'
     } else if (e?.name === 'NotFoundError') {
       scanError.value = 'No camera found on this device.'
     } else {
+      // Anything else — stop cleanly and show a message
       scanError.value = 'Camera unavailable. Check permissions and try again.'
+      console.error('[QR scan]', e)
     }
-    scanning.value = false
-    console.error(e)
+    stopScan()
   }
 }
 
-function stopScan() {
-  scanning.value = false
-  try { codeReader?.reset() } catch { /* ignore */ }
-  try {
-    activeStream?.getTracks().forEach(t => t.stop())
-    activeStream = null
-    if (videoRef.value) videoRef.value.srcObject = null
-  } catch { /* ignore */ }
-}
-
 async function switchCamera() {
-  if (!hasMultipleCameras.value) return
+  if (!hasMultipleCameras.value || !scanning.value) return
   stopScan()
   cameraIndex.value = (cameraIndex.value + 1) % cameras.value.length
-  await new Promise(r => setTimeout(r, 200))
+  // Brief pause so the previous stream fully releases before we open the next
+  await new Promise(r => setTimeout(r, 250))
   startScan()
 }
 
 function handleScanResult(text) {
   stopScan()
-  try {
-    const payload = JSON.parse(text)
-    if (!payload.v || !payload.title || !Array.isArray(payload.items)) {
-      scanError.value = 'QR code is not a valid workout.'
-      return
-    }
-    scanResult.value = payload
-  } catch {
-    scanError.value = 'Could not read QR code data.'
+  const { payload, error } = decodePayload(text)
+  if (error) {
+    scanError.value = error
+    return
   }
+  scanResult.value = payload
 }
 
 function importWorkout() {
@@ -191,6 +256,7 @@ watch(tab, (t) => {
   if (t !== 'scan') stopScan()
 })
 
+// Last resort — component torn down while camera is active
 onUnmounted(stopScan)
 
 function close() {
@@ -212,8 +278,7 @@ function close() {
         <button v-if="workout" class="tab" :class="{ active: tab === 'share' }" @click="tab = 'share'">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
             <rect x="3" y="14" width="7" height="7" />
             <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01" />
           </svg>
@@ -233,9 +298,14 @@ function close() {
       <div v-if="tab === 'share'" class="tab-content">
         <div v-if="qrError" class="scan-error">{{ qrError }}</div>
         <div v-else-if="qrDataUrl" class="qr-wrap">
-          <img :src="qrDataUrl" alt="Workout QR Code" class="qr-img" />
+          <div class="qr-card">
+            <img :src="qrDataUrl" alt="Workout QR Code" class="qr-img" />
+          </div>
           <p class="qr-hint">Show this to another device to share <strong>{{ workout?.title }}</strong></p>
-          <p class="qr-meta">{{ workout?.items.length }} exercise{{ workout?.items.length === 1 ? '' : 's' }}</p>
+          <p v-if="workout && workout.items.length > MAX_EXERCISES" class="qr-warning">
+            Only the first {{ MAX_EXERCISES }} exercises are included in the QR code.
+          </p>
+          <p class="qr-meta">{{ Math.min(workout?.items.length ?? 0, MAX_EXERCISES) }} exercise{{ workout?.items.length === 1 ? '' : 's' }} encoded</p>
         </div>
         <div v-else class="qr-loading">Generating…</div>
       </div>
@@ -269,7 +339,6 @@ function close() {
           <div class="video-wrap">
             <video ref="videoRef" class="video" autoplay muted playsinline />
             <div class="scan-line" />
-            <!-- Switch button overlaid top-right, only when multiple cameras confirmed -->
             <button
               v-if="hasMultipleCameras && scanning"
               class="switch-overlay-btn"
@@ -277,8 +346,8 @@ function close() {
               aria-label="Switch camera"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                <path d="M23 4v6h-6" /><path d="M1 20v-6h6" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
               </svg>
             </button>
           </div>
@@ -288,8 +357,8 @@ function close() {
           <div class="scan-btns">
             <button v-if="!scanning" class="btn btn-accent scan-btn" @click="startScan">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
+                <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+                <line x1="3" y1="12" x2="21" y2="12" />
               </svg>
               Start Camera
             </button>
@@ -297,6 +366,7 @@ function close() {
           </div>
         </template>
       </div>
+
     </div>
   </div>
 </template>
@@ -330,9 +400,7 @@ function close() {
   justify-content: space-between;
 }
 
-.sheet-header h3 {
-  font-size: 16px;
-}
+.sheet-header h3 { font-size: 16px; }
 
 .close-btn {
   background: none;
@@ -390,10 +458,17 @@ function close() {
   width: 100%;
 }
 
-.qr-img {
-  width: 325px;
-  height: 325px;
+.qr-card {
+  background: #ffffff;
+  padding: 16px;
   border-radius: var(--radius);
+  display: flex;
+}
+
+.qr-img {
+  width: 280px;
+  height: 280px;
+  display: block;
 }
 
 .qr-hint {
@@ -410,6 +485,14 @@ function close() {
   margin: 0;
 }
 
+.qr-warning {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-danger);
+  text-align: center;
+  margin: 0;
+}
+
 .qr-loading {
   color: var(--color-text-dim);
   font-size: 13px;
@@ -420,7 +503,6 @@ function close() {
 .video-wrap {
   position: relative;
   width: 100%;
-  max-width: 485px;
   aspect-ratio: 1;
   border-radius: var(--radius);
   overflow: hidden;
@@ -450,13 +532,12 @@ function close() {
   50%       { transform: translateY(80px);  opacity: 0.9; }
 }
 
-/* Camera switch button — overlaid top-right corner of the viewfinder */
 .switch-overlay-btn {
   position: absolute;
   top: 10px;
   right: 10px;
   background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
   border-radius: 8px;
   width: 36px;
@@ -486,6 +567,7 @@ function close() {
   font-size: 13px;
   color: var(--color-danger);
   text-align: center;
+  width: 100%;
 }
 
 /* ── Scan preview ── */

@@ -18,5 +18,13 @@ export const router = createRouter({
     { path: '/people', name: 'people', component: PeopleView },
     { path: '/library', name: 'library', component: ExerciseLibraryView },
     { path: '/library/:id', name: 'exercise-detail', component: ExerciseDetailView }
-  ]
+  ],
+  scrollBehavior (to, from, savedPosition) {
+    if(to.name === 'library'){
+      return savedPosition
+    } else {
+      // always scroll to top
+      return { top: 0 }
+    }
+  }
 })

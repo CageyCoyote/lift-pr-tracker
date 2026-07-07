@@ -108,6 +108,9 @@ function saveRename() {
       <button class="btn btn-accent" @click="pickerOpen = !pickerOpen">
         {{ pickerOpen ? 'Close' : '+ Add Exercise' }}
       </button>
+      <button class="btn add-button-outline steel" @click="router.push({ name: 'plan-detail', params: { id: workout.id } })">
+        Save
+      </button>
     </div>
 
     <div v-if="pickerOpen" class="picker-panel">
@@ -257,6 +260,13 @@ function saveRename() {
   display: flex;
   gap: 10px;
   margin-top: 18px;
+}
+
+.add-button-outline.steel  {
+  background: var(--color-bg);
+  border-color: var(--color-steel);
+  color: var(--color-steel);
+  border-width: 2px;
 }
 
 .bottom-actions .btn {

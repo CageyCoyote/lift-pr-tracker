@@ -10,9 +10,36 @@ const peopleStore = usePeopleStore()
 const recordsStore = useRecordsStore()
 const formOpen = ref(false)
 
+const sortBy = ref('date')
+
 const bests = computed(() =>
   peopleStore.activePersonId ? recordsStore.bestsForPerson(peopleStore.activePersonId) : []
 )
+
+const sortedBests = computed(() => {
+  const list = [...bests.value]
+  if (sortBy.value === 'date') {
+    // Most recent PR date first
+    return list.sort((a, b) => b.best.date.localeCompare(a.best.date))
+  }
+  if (sortBy.value === 'weight') {
+    // Highest weight first, tie-broken by reps descending
+    return list.sort((a, b) =>
+      b.best.weight !== a.best.weight
+        ? b.best.weight - a.best.weight
+        : b.best.reps - a.best.reps
+    )
+  }
+  if (sortBy.value === 'reps') {
+    // Most reps first, tie-broken by weight descending
+    return list.sort((a, b) =>
+      b.best.reps !== a.best.reps
+        ? b.best.reps - a.best.reps
+        : b.best.weight - a.best.weight
+    )
+  }
+  return list
+})
 
 function handleSaved(payload) {
   recordsStore.addEntry({ personId: peopleStore.activePersonId, ...payload })
@@ -35,10 +62,19 @@ function handleSaved(payload) {
       <div v-if="bests.length === 0" class="empty-state">
         No PRs logged yet for this person. Tap "Log a PR" to add the first one.
       </div>
-      <div v-else class="card-list">
-        <PRCard v-for="b in bests" :key="b.exerciseId" :person-id="peopleStore.activePersonId"
-          :exercise-id="b.exerciseId" :best="b.best" />
-      </div>
+      <template v-else>
+        <div class="list-controls">
+          <select v-model="sortBy" class="sort-select">
+            <option value="date">Sort: Date</option>
+            <option value="weight">Sort: Weight</option>
+            <option value="reps">Sort: Reps</option>
+          </select>
+        </div>
+        <div class="card-list">
+          <PRCard v-for="b in sortedBests" :key="b.exerciseId" :person-id="peopleStore.activePersonId"
+            :exercise-id="b.exerciseId" :best="b.best" />
+        </div>
+      </template>
 
       <button class="btn btn-accent fab" @click="formOpen = true">+ Log a PR</button>
     </template>
@@ -56,6 +92,23 @@ function handleSaved(payload) {
 .page-header h1 {
   font-size: 28px;
   margin-top: 2px;
+}
+
+.list-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.sort-select {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 10px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  border-radius: var(--radius);
+  width: auto;
 }
 
 .card-list {

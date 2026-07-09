@@ -13,12 +13,26 @@ export const ICON_COLORS = [
 
 export const useSettingsStore = defineStore('settings', () => {
   const iconColor = ref(load('settings.iconColor', '#c9a227'))
+  const theme = ref(load('settings.theme', 'dark'))
 
   watch(iconColor, (v) => save('settings.iconColor', v))
+  watch(theme, (v) => {
+    save('settings.theme', v)
+    document.documentElement.setAttribute('data-theme', v)
+  })
 
   function setIconColor(hex) {
     iconColor.value = hex
   }
 
-  return { iconColor, setIconColor }
+  function setTheme(t) {
+    theme.value = t
+  }
+
+  // Apply persisted theme immediately on store init
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', theme.value)
+  }
+
+  return { iconColor, theme, setIconColor, setTheme, applyTheme }
 })

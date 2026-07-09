@@ -1,18 +1,16 @@
 :root {
   /* Brand Colors */
-  --color-accent: #c9a227; /* Energy — primary actions / denotes a PR / best lift */
+  --color-accent: #c9a227;
   --color-bg: #15161a;
-  --color-steel: #5b7a8c; /* Steel - secondary actions */
-  /* Secondary Colors */
+  --color-steel: #5b7a8c;
   --color-accent-dim: #8a701c;
   --color-surface: #1e2024;
   --color-surface-2: #26292e;
-  /* Color tokens */
-  --color-border: #34373d; /* Stealth - borders / backgrounds */
-  --color-text: #ece9e2; /* - Chalk - text color */
+  --color-border: #34373d;
+  --color-text: #ece9e2;
   --color-text-dim: #9a9ca3;
-  --color-danger: #c1443c; /* Pump - danger / hard difficulty */
-  --color-green: #4a9e6b; /* Recovery - easy difficulty */
+  --color-danger: #c1443c;
+  --color-green: #4a9e6b;
 
   /* Type tokens */
   --font-display: "Oswald", sans-serif;
@@ -21,22 +19,39 @@
 
   --radius: 10px;
   --nav-height: 64px;
-
-  /* light Theme */
-  /* Background*/
-  /* --color-light-theme-background: #F8F9FA; */
-  /* Surface / Cards */
-  /* --color-light-theme-surface: #F8F9FA; */
-  /* --color-light-theme-surface-2: #dddddd; */
-  /* Text Primary (near black) */
-  /* --color-light-theme-text: #1F1F1F; */
-  /* Text Secondary */
-  /* --color-text-dim: #575757; */
-  /* Inactive Tab  (light gray) */
-  /* --color-light-theme-backgound2: #E5E7EB; */
-  /* Borders / Dividers, */
-  /* --color-light-theme-border: #ababab; */
+  /* Height of the fixed account icon — pages pad their top by this amount */
+  --account-btn-clearance: 52px;
 }
+
+/* ── Light theme ──────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --color-bg:       #F8F9FA;
+  --color-surface:  #FFFFFF;
+  --color-surface-2: #E5E7EB;
+  --color-border:   #ababab;
+  --color-text:     #1F1F1F;
+  --color-text-dim: #575757;
+  --color-accent:   #c9a227;
+  --color-steel:    #5b7a8c;
+  --color-danger:   #c1443c;
+  --color-green:    #4a9e6b;
+}
+
+/* ── Steel theme ──────────────────────────────────────────────────────────── */
+[data-theme="steel"] {
+  --color-bg:        #2a2d31;
+  --color-surface:   #32363b;
+  --color-surface-2: #3b3f45;
+  --color-border:    #4a4f57;
+  --color-text:      #e8eaed;
+  --color-text-dim:  #8f9399;
+  --color-accent:    #c9a227;
+  --color-steel:     #5b7a8c;
+  --color-danger:    #c1443c;
+  --color-green:     #4a9e6b;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 * {
   box-sizing: border-box;
@@ -115,7 +130,8 @@ a:focus-visible {
 .page {
   max-width: 640px;
   margin: 0 auto;
-  padding: 0px 16px 32px;
+  /* Push content below the fixed account icon */
+  padding: var(--account-btn-clearance) 16px 32px;
 }
 
 .eyebrow {

@@ -110,13 +110,13 @@ function handleSaved(payload) {
         <div class="muscle-group">
           <span class="muscle-heading">Primary</span>
           <div class="chip-row">
-            <span v-for="m in exercise.primaryMuscles" :key="m" class="chip primary">{{ m }}</span>
+            <span v-for="m in exercise.primaryMuscles" :key="m" class="muscle-chip primary">{{ m }}</span>
           </div>
         </div>
         <div v-if="exercise.secondaryMuscles?.length" class="muscle-group">
           <span class="muscle-heading">Secondary</span>
           <div class="chip-row">
-            <span v-for="m in exercise.secondaryMuscles" :key="m" class="chip secondary">{{ m }}</span>
+            <span v-for="m in exercise.secondaryMuscles" :key="m" class="muscle-chip secondary">{{ m }}</span>
           </div>
         </div>
       </div>
@@ -279,21 +279,22 @@ function handleSaved(payload) {
   gap: 4px;
 }
 
-.chip {
+.muscle-chip {
   font-family: var(--font-mono);
   font-size: 11px;
   padding: 3px 10px;
   border-radius: 999px;
   text-transform: capitalize;
-}
+  white-space: nowrap;
+}  
 
-.chip.primary {
-  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+.muscle-chip.primary {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
   color: var(--color-accent);
 }
 
-.chip.secondary {
+.muscle-chip.secondary {
   background: color-mix(in srgb, var(--color-steel) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-steel) 35%, transparent);
   color: var(--color-steel);

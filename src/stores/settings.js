@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { load, save } from '../utils/storage'
 
 export const ICON_COLORS = [
@@ -11,9 +11,22 @@ export const ICON_COLORS = [
   { label: 'Chalk',    hex: '#ece9e2' },
 ]
 
+// Per-theme fallbacks for colours that become illegible against that theme's background.
+// Keys are "<theme>:<hex>" — values are the replacement colour to render instead.
+const THEME_OVERRIDES = {
+  'steel:#383838': '#909090',  // Stealth on steel bg (#2a2d31) — too close; use mid-grey
+  'light:#ece9e2': '#8a8c91',  // Chalk on light bg (#F8F9FA)   — invisible; use cool grey
+}
+
 export const useSettingsStore = defineStore('settings', () => {
   const iconColor = ref(load('settings.iconColor', '#c9a227'))
-  const theme = ref(load('settings.theme', 'dark'))
+  const theme = ref(load('settings.theme', 'steel'))
+
+  // Resolves the actual rendered colour, swapping out illegible combos
+  const effectiveIconColor = computed(() => {
+    const key = `${theme.value}:${iconColor.value}`
+    return THEME_OVERRIDES[key] ?? iconColor.value
+  })
 
   watch(iconColor, (v) => save('settings.iconColor', v))
   watch(theme, (v) => {
@@ -29,10 +42,9 @@ export const useSettingsStore = defineStore('settings', () => {
     theme.value = t
   }
 
-  // Apply persisted theme immediately on store init
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', theme.value)
   }
 
-  return { iconColor, theme, setIconColor, setTheme, applyTheme }
+  return { iconColor, effectiveIconColor, theme, setIconColor, setTheme, applyTheme }
 })

@@ -14,7 +14,7 @@ onMounted(() => settingsStore.applyTheme())
 <template>
   <button
     class="account-btn"
-    :style="{ color: settingsStore.iconColor }"
+    :style="{ color: settingsStore.effectiveIconColor }"
     aria-label="Account & Settings"
     @click="router.push('/account')"
   >

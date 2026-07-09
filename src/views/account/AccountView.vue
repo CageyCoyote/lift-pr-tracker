@@ -1,9 +1,12 @@
 <script setup>
+import { useRoute, useRouter } from 'vue-router'
 import { useSettingsStore, ICON_COLORS } from '../../stores/settings'
 import { useRecordsStore } from '../../stores/records'
 import { useWorkoutsStore } from '../../stores/workouts'
 import { usePeopleStore } from '../../stores/people'
 
+const route = useRoute()
+const router = useRouter()
 const settingsStore = useSettingsStore()
 const recordsStore = useRecordsStore()
 const workoutsStore = useWorkoutsStore()
@@ -49,7 +52,7 @@ function exportWorkouts() {
 
 <template>
   <div class="page">
-    <router-link to="/" class="back-link">← Back</router-link>
+    <button class="back-link" @click="router.back()">← Back</button>
 
     <header class="page-header">
       <span class="eyebrow">Preferences</span>
@@ -153,11 +156,12 @@ function exportWorkouts() {
 
 <style scoped>
 .back-link {
+  all: unset;
   display: inline-block;
   color: var(--color-text-dim);
   text-decoration: none;
   font-size: 13px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
 .page-header {
@@ -238,10 +242,11 @@ function exportWorkouts() {
   border-radius: var(--radius);
   padding: 10px 12px;
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .swatch.selected {
+  background: var(--swatch);
   border-color: var(--swatch);
 }
 
@@ -254,6 +259,12 @@ function exportWorkouts() {
   border: 1px solid color-mix(in srgb, var(--swatch) 60%, var(--color-border));
 }
 
+/* Hide dot when selected — the whole card is already the colour */
+.swatch.selected .swatch-dot {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .swatch-label {
   font-size: 12px;
   font-family: var(--font-mono);
@@ -262,9 +273,8 @@ function exportWorkouts() {
   text-align: left;
 }
 
-.swatch-check {
-  font-size: 11px;
-  color: var(--swatch);
+.swatch.selected .swatch-label {
+  color: #fff;
 }
 
 /* ── Export ── */

@@ -1,7 +1,9 @@
 :root {
   /* Brand Colors */
+  --color-brass: #c9a227;
   --color-accent: #c9a227;
   --color-bg: #15161a;
+  --color-deep-dark-blue: #15161a;
   --color-steel: #5b7a8c;
   --color-accent-dim: #8a701c;
   --color-surface: #1e2024;
@@ -35,6 +37,14 @@
   --color-steel:    #5b7a8c;
   --color-danger:   #c1443c;
   --color-green:    #4a9e6b;
+}
+
+/* Primary muscle chips use brass text which is borderline contrast on white.
+   In light mode we darken the text and give the chip a stronger background. */
+[data-theme="light"] .muscle-chip.primary {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+  color: #7a600a;  /* darkened brass — passes AA contrast on white */
 }
 
 /* ── Steel theme ──────────────────────────────────────────────────────────── */

@@ -80,7 +80,7 @@ function exportWorkouts() {
     <section class="section">
       <h2 class="section-title">Export Data</h2>
       <p class="section-note">
-        Download your data as CSV files. Recommended before any app updates.
+        Download your data as CSV files.
       </p>
       <div class="export-row">
         <button class="export-btn" @click="exportPRs" :disabled="recordsStore.entries.length === 0">

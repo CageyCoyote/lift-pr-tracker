@@ -33,7 +33,10 @@ const muscles = (wid) => workoutsStore.targetedMuscles(wid)
 <template>
   <div class="page">
     <header class="page-header">
-      <h1>Workout Plans</h1>
+      <div>
+        <span class="eyebrow">&nbsp;</span>
+        <h1>Workout Plans</h1>
+      </div>
       <button class="qr-btn" @click="qrOpen = true" aria-label="Scan & import workout">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
@@ -68,7 +71,7 @@ const muscles = (wid) => workoutsStore.targetedMuscles(wid)
 <style scoped>
 .page-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   margin-bottom: 16px;
 }

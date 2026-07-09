@@ -31,7 +31,7 @@
   /* Text Primary (near black) */
   /* --color-light-theme-text: #1F1F1F; */
   /* Text Secondary */
-  /* --color-text-dim: #575757;; */
+  /* --color-text-dim: #575757; */
   /* Inactive Tab  (light gray) */
   /* --color-light-theme-backgound2: #E5E7EB; */
   /* Borders / Dividers, */
@@ -115,7 +115,7 @@ a:focus-visible {
 .page {
   max-width: 640px;
   margin: 0 auto;
-  padding: 20px 16px 32px;
+  padding: 0px 16px 32px;
 }
 
 .eyebrow {

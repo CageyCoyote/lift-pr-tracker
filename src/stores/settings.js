@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { load, save } from '../utils/storage'
 
 export const ICON_COLORS = [
@@ -11,31 +11,40 @@ export const ICON_COLORS = [
   { label: 'Chalk',    hex: '#ece9e2' },
 ]
 
+const DEFAULT_COLOR = '#c9a227'
+
 // Per-theme fallbacks for colours that become illegible against that theme's background.
-// Keys are "<theme>:<hex>" — values are the replacement colour to render instead.
 const THEME_OVERRIDES = {
-  'steel:#383838': '#909090',  // Stealth on steel bg (#2a2d31) — too close; use mid-grey
-  'light:#ece9e2': '#8a8c91',  // Chalk on light bg (#F8F9FA)   — invisible; use cool grey
+  'steel:#383838': '#909090',
+  'light:#ece9e2': '#8a8c91',
 }
 
 export const useSettingsStore = defineStore('settings', () => {
-  const iconColor = ref(load('settings.iconColor', '#c9a227'))
+  // Map of personId → hex. Persisted as a single IDB key.
+  const personIconColors = ref(load('settings.personIconColors', {}))
   const theme = ref(load('settings.theme', 'steel'))
 
-  // Resolves the actual rendered colour, swapping out illegible combos
-  const effectiveIconColor = computed(() => {
-    const key = `${theme.value}:${iconColor.value}`
-    return THEME_OVERRIDES[key] ?? iconColor.value
-  })
-
-  watch(iconColor, (v) => save('settings.iconColor', v))
+  watch(personIconColors, (v) => save('settings.personIconColors', v), { deep: true })
   watch(theme, (v) => {
     save('settings.theme', v)
     document.documentElement.setAttribute('data-theme', v)
   })
 
-  function setIconColor(hex) {
-    iconColor.value = hex
+  function getIconColor(personId) {
+    if (!personId) return DEFAULT_COLOR
+    return personIconColors.value[personId] ?? DEFAULT_COLOR
+  }
+
+  function setIconColor(personId, hex) {
+    if (!personId) return
+    personIconColors.value[personId] = hex
+  }
+
+  // Returns the colour to actually render — applies theme overrides for illegible combos
+  function effectiveIconColor(personId) {
+    const color = getIconColor(personId)
+    const key = `${theme.value}:${color}`
+    return THEME_OVERRIDES[key] ?? color
   }
 
   function setTheme(t) {
@@ -46,5 +55,13 @@ export const useSettingsStore = defineStore('settings', () => {
     document.documentElement.setAttribute('data-theme', theme.value)
   }
 
-  return { iconColor, effectiveIconColor, theme, setIconColor, setTheme, applyTheme }
+  return {
+    personIconColors,
+    theme,
+    getIconColor,
+    setIconColor,
+    effectiveIconColor,
+    setTheme,
+    applyTheme,
+  }
 })

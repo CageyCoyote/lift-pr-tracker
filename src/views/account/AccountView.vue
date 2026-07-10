@@ -59,6 +59,23 @@ function exportWorkouts() {
       <h1>Account</h1>
     </header>
 
+    <!-- Active person -->
+    <div v-if="peopleStore.getActivePerson()" class="active-person">
+      <div
+        class="person-avatar"
+        :style="{ background: settingsStore.effectiveIconColor(peopleStore.activePersonId) }"
+      >
+        {{ peopleStore.getActivePerson().name.charAt(0).toUpperCase() }}
+      </div>
+      <div class="person-info">
+        <span class="eyebrow">Active lifter</span>
+        <span class="person-name">{{ peopleStore.getActivePerson().name }}</span>
+      </div>
+    </div>
+    <div v-else class="no-person-note">
+      No active person selected. <router-link to="/people">Add one →</router-link>
+    </div>
+
     <!-- Theme -->
     <section class="section">
       <h2 class="section-title">Theme</h2>
@@ -106,17 +123,23 @@ function exportWorkouts() {
 
     <!-- Icon colour -->
     <section class="section">
-      <h2 class="section-title">Icon Color</h2>
+      <h2 class="section-title">
+        Icon Color
+        <span v-if="peopleStore.getActivePerson()" class="section-person">
+          — {{ peopleStore.getActivePerson().name }}
+        </span>
+      </h2>
       <div class="swatch-grid">
         <button
           v-for="c in ICON_COLORS"
           :key="c.hex"
           class="swatch"
-          :class="{ selected: settingsStore.iconColor === c.hex }"
+          :class="{ selected: settingsStore.getIconColor(peopleStore.activePersonId) === c.hex }"
           :style="{ '--swatch': c.hex }"
           :aria-label="c.label"
           :title="c.label"
-          @click="settingsStore.setIconColor(c.hex)"
+          :disabled="!peopleStore.activePersonId"
+          @click="settingsStore.setIconColor(peopleStore.activePersonId, c.hex)"
         >
           <span class="swatch-dot" />
           <span class="swatch-label">{{ c.label }}</span>
@@ -155,6 +178,62 @@ function exportWorkouts() {
 </template>
 
 <style scoped>
+.active-person {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 28px;
+}
+
+.person-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: #fff;
+  flex-shrink: 0;
+  mix-blend-mode: normal;
+}
+
+.person-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.person-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.no-person-note {
+  font-size: 13px;
+  color: var(--color-text-dim);
+  margin-bottom: 28px;
+}
+
+.no-person-note a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.section-person {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-text-dim);
+}
+
 .back-link {
   all: unset;
   display: inline-block;

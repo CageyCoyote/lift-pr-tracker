@@ -3,18 +3,19 @@ import { onMounted } from 'vue'
 import AppNav from './components/common/AppNav.vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from './stores/settings'
+import { usePeopleStore } from './stores/people'
 
 const router = useRouter()
 const settingsStore = useSettingsStore()
+const peopleStore = usePeopleStore()
 
-// Apply the saved theme before first render
 onMounted(() => settingsStore.applyTheme())
 </script>
 
 <template>
   <button
     class="account-btn"
-    :style="{ color: settingsStore.effectiveIconColor }"
+    :style="{ color: settingsStore.effectiveIconColor(peopleStore.activePersonId) }"
     aria-label="Account & Settings"
     @click="router.push('/account')"
   >

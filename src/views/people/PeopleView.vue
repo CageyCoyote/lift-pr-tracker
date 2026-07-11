@@ -3,15 +3,30 @@ import { ref } from 'vue'
 import { usePeopleStore } from '../../stores/people'
 
 const peopleStore = usePeopleStore()
-const name = ref('')
+
+// Inline add state
+const isAdding = ref(false)
+const newName = ref('')
 
 // Inline edit state — only one person editable at a time
 const editingId = ref(null)
 const editDraft = ref('')
 
-function submit() {
-  peopleStore.addPerson(name.value)
-  name.value = ''
+function startAdd() {
+  isAdding.value = true
+  newName.value = ''
+}
+
+function saveNewPerson() {
+  if (newName.value.trim()) {
+    peopleStore.addPerson(newName.value.trim())
+  }
+  cancelAdd()
+}
+
+function cancelAdd() {
+  isAdding.value = false
+  newName.value = ''
 }
 
 function startEdit(person) {
@@ -35,29 +50,48 @@ function cancelEdit() {
     <header class="page-header">
       <h1>People</h1>
     </header>
-    <div class="empty-state">
-      {{ peopleStore.people.length === 1 ? "Add a person to track" : "Tap to switch the active lifter" }}.
+
+    <div class="add-section">
+      <button 
+        v-if="!isAdding" 
+        class="btn btn-accent add-btn" 
+        @click="startAdd"
+      >
+        + New Person
+      </button>
+
+      <form 
+        v-else 
+        class="add-form" 
+        @submit.prevent="saveNewPerson"
+      >
+        <input 
+          v-model="newName" 
+          type="text" 
+          placeholder="Enter name" 
+          class="add-input" 
+          autofocus 
+          required 
+        />
+        <button type="submit" class="save-btn">Save</button>
+        <button class="icon-btn danger"  @click="cancelAdd" aria-label="Cancel">×</button>
+        
+      </form>
     </div>
-    <form class="add-form" @submit.prevent="submit">
-      <input v-model="name" type="text" placeholder="Name" required />
-      <button type="submit" class="btn btn-accent">Add</button>
-    </form>
 
     <div v-if="peopleStore.people.length === 0" class="empty-state">
-      No one added yet. Add a name above to start tracking their PRs.
+      No one added yet. Tap "+ New Person" above to start tracking PRs.
     </div>
 
     <ul v-else class="people-list">
       <li v-for="p in peopleStore.people" :key="p.id" class="person-row">
 
-        <!-- Edit mode -->
         <form v-if="editingId === p.id" class="edit-form" @submit.prevent="saveEdit(p.id)">
           <input v-model="editDraft" type="text" class="edit-input" autofocus required />
           <button type="submit" class="icon-btn save">✓</button>
-          <button type="button" class="icon-btn" @click="cancelEdit">×</button>
+          <button class="icon-btn danger"  @click="cancelEdit" aria-label="Cancel">×</button>
         </form>
 
-        <!-- Normal mode -->
         <template v-else>
           <button class="person-name" @click="peopleStore.setActivePerson(p.id)">
             <span class="dot" :class="{ active: p.id === peopleStore.activePersonId }" />
@@ -92,13 +126,61 @@ function cancelEdit() {
   margin-top: 2px;
 }
 
+.add-section {
+  margin-bottom: 16px;
+}
+
 .add-form {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
-.add-form input {
+.add-input {
   flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.save-btn {
+  background: var(--color-accent);
+  color: #1a1500;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.save-btn:hover {
+  background: var(--color-accent-dim);
+}
+
+.cancel-btn {
+  background: var(--color-danger);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cancel-btn:hover {
+  background: color-mix(in srgb, var(--color-danger) 80%, black);
+}
+
+.add-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .empty-state {

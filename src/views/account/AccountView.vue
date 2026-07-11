@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSettingsStore, ICON_COLORS } from '../../stores/settings'
 import { useRecordsStore } from '../../stores/records'
@@ -11,6 +12,8 @@ const settingsStore = useSettingsStore()
 const recordsStore = useRecordsStore()
 const workoutsStore = useWorkoutsStore()
 const peopleStore = usePeopleStore()
+
+const switcherOpen = ref(false)
 
 // ── CSV helpers ──────────────────────────────────────────────
 function downloadCsv(filename, rows) {
@@ -60,7 +63,7 @@ function exportWorkouts() {
     </header>
 
     <!-- Active person -->
-    <div v-if="peopleStore.getActivePerson()" class="active-person">
+    <button v-if="peopleStore.getActivePerson()" class="active-person" @click="switcherOpen = true">
       <div
         class="person-avatar"
         :style="{ background: settingsStore.effectiveIconColor(peopleStore.activePersonId) }"
@@ -71,7 +74,11 @@ function exportWorkouts() {
         <span class="eyebrow">Active lifter</span>
         <span class="person-name">{{ peopleStore.getActivePerson().name }}</span>
       </div>
-    </div>
+      <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
     <div v-else class="no-person-note">
       No active person selected. <router-link to="/people">Add one →</router-link>
     </div>
@@ -174,6 +181,43 @@ function exportWorkouts() {
         </button>
       </div>
     </section>
+
+    <!-- Person switcher sheet -->
+    <div v-if="switcherOpen" class="overlay" @click.self="switcherOpen = false">
+      <div class="sheet">
+        <header class="sheet-header">
+          <h3>Switch Lifter</h3>
+          <button class="close-btn" @click="switcherOpen = false" aria-label="Close">×</button>
+        </header>
+        <ul class="switcher-list">
+          <li v-for="p in peopleStore.people" :key="p.id">
+            <button
+              class="switcher-row"
+              :class="{ active: p.id === peopleStore.activePersonId }"
+              @click="peopleStore.setActivePerson(p.id); switcherOpen = false"
+            >
+              <div
+                class="switcher-avatar"
+                :style="{ background: settingsStore.effectiveIconColor(p.id) }"
+              >
+                {{ p.name.charAt(0).toUpperCase() }}
+              </div>
+              <span class="switcher-name">{{ p.name }}</span>
+              <svg v-if="p.id === peopleStore.activePersonId"
+                width="16" height="16" viewBox="0 0 24 24" fill="none"
+                :stroke="settingsStore.effectiveIconColor(p.id)"
+                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </button>
+          </li>
+        </ul>
+        <router-link to="/people" class="manage-link" @click="switcherOpen = false">
+          Manage people →
+        </router-link>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -187,6 +231,114 @@ function exportWorkouts() {
   border-radius: var(--radius);
   padding: 14px;
   margin-bottom: 28px;
+  width: 100%;
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.active-person:hover {
+  border-color: var(--color-text-dim);
+}
+
+.chevron-icon {
+  color: var(--color-text-dim);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Switcher sheet ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  z-index: 20;
+}
+
+.sheet {
+  width: 100%;
+  background: var(--color-surface);
+  border-radius: 16px 16px 0 0;
+  border-top: 1px solid var(--color-border);
+  padding: 18px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheet-header h3 { font-size: 16px; }
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.switcher-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.switcher-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  color: var(--color-text);
+  transition: border-color 0.15s ease;
+}
+
+.switcher-row.active {
+  border-color: var(--color-accent);
+}
+
+.switcher-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.switcher-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  flex: 1;
+  text-align: left;
+}
+
+.manage-link {
+  font-size: 13px;
+  color: var(--color-text-dim);
+  text-decoration: none;
+  text-align: center;
+  padding-top: 4px;
+}
+
+.manage-link:hover {
+  color: var(--color-accent);
 }
 
 .person-avatar {
@@ -212,6 +364,7 @@ function exportWorkouts() {
 .person-name {
   font-family: var(--font-display);
   font-size: 18px;
+  color: var(--color-text)
 }
 
 .no-person-note {

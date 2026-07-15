@@ -122,14 +122,6 @@ function saveRename() {
 </template>
 
 <style scoped>
-.back-link {
-  display: inline-block;
-  color: var(--color-text-dim);
-  text-decoration: none;
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-
 .page-header {
   margin-bottom: 16px;
 }
@@ -161,13 +153,6 @@ function saveRename() {
   font-family: var(--font-display);
   font-size: 20px;
   /* text-transform: uppercase; */
-}
-
-.empty-state {
-  margin-top: 24px;
-  color: var(--color-text-dim);
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 .plan-list {

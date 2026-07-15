@@ -60,13 +60,6 @@ defineProps({
   gap: 6px;
 }
 
-.muscle-chip {
-  font-size: 11px;
-  text-transform: capitalize;
-  padding: 3px 9px;
-  border-radius: 999px;
-}
-
 .muscle-chip.primary {
   background: color-mix(in srgb, var(--color-accent) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);

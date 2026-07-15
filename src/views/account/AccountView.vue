@@ -247,40 +247,10 @@ function exportWorkouts() {
 }
 
 /* ── Switcher sheet ── */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: flex-end;
-  z-index: 20;
-}
-
 .sheet {
-  width: 100%;
-  background: var(--color-surface);
-  border-radius: 16px 16px 0 0;
-  border-top: 1px solid var(--color-border);
-  padding: 18px 16px calc(28px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sheet-header h3 { font-size: 16px; }
-
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-dim);
-  font-size: 24px;
-  line-height: 1;
 }
 
 .switcher-list {
@@ -388,11 +358,6 @@ function exportWorkouts() {
 }
 
 .back-link {
-  all: unset;
-  display: inline-block;
-  color: var(--color-text-dim);
-  text-decoration: none;
-  font-size: 13px;
   margin-bottom: 14px;
 }
 

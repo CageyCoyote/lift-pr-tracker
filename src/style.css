@@ -152,6 +152,140 @@ a:focus-visible {
   color: var(--color-text-dim);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+    SHARED COMPONENT UTILITIES
+    Patterns repeated verbatim across 4+ unrelated files.
+    Scoped styles in individual components should be removed in favour of these.
+  ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Bottom sheet overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  z-index: 20;
+}
+
+.sheet {
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: 16px 16px 0 0;
+  padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
+}
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sheet-header h3 {
+  font-size: 16px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-size: 24px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+/* ── Back navigation link ── */
+.back-link {
+  all: unset;
+  display: inline-block;
+  color: var(--color-text-dim);
+  text-decoration: none;
+  font-size: 13px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+/* ── Empty state message ── */
+.empty-state {
+  margin-top: 24px;
+  color: var(--color-text-dim);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Muscle chips ── */
+.muscle-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.muscle-chip.primary {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 38%, transparent);
+  color: var(--color-accent);
+}
+
+.muscle-chip.secondary {
+  background: color-mix(in srgb, var(--color-steel) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-steel) 50%, transparent);
+  color: var(--color-steel);
+}
+
+/* ── Full-width Action Button f.a.b.  ── */
+.fab {
+  width: 100%;
+  margin-top: 18px;
+}
+
+/* ── Exercise instructions ── */
+.instructions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.step-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-accent);
+  font-weight: 700;
+  width: 18px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.step-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+/* ── Exercise image row (detail + workout hint sheet) ── */
+.image-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+/* Media Query */
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;

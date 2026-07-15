@@ -3,32 +3,38 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useExercisesStore } from '../../stores/exercises'
 import ExerciseCard from '../../components/exercises/ExerciseCard.vue'
+import FavoriteStar from '../../components/common/FavoriteStar.vue'
+import { useFavoritesStore } from '../../stores/favourites'
 
 const exercisesStore = useExercisesStore()
+const favouritesStore = useFavoritesStore()
 const route = useRoute()
 const router = useRouter()
 
 // All search state lives in the URL — back button restores it for free
-const query     = computed(() => route.query.q         || '')
+const query = computed(() => route.query.q || '')
+const favOnly = computed(() => route.query.fav === '1')
 const equipment = computed(() => route.query.equipment || '')
-const muscle    = computed(() => route.query.muscle    || '')
-const category  = computed(() => route.query.category  || '')
+const muscle = computed(() => route.query.muscle || '')
+const category = computed(() => route.query.category || '')
 
 const searchExpanded = computed(() =>
-  !!(query.value || equipment.value || muscle.value || category.value)
+  !!(query.value || equipment.value || muscle.value || category.value || favOnly.value)
 )
 
-const exercises = computed(() =>
-  exercisesStore.search({
+const exercises = computed(() => {
+  const results = exercisesStore.search({
     query: query.value,
     equipment: equipment.value,
     muscle: muscle.value,
     category: category.value,
   })
-)
+  if (favOnly.value) return results.filter(e => favouritesStore.isFavorite(e.id))
+  return results
+})
 
 const hasFilters = computed(() =>
-  !!(query.value || equipment.value || muscle.value || category.value)
+  !!(query.value || equipment.value || muscle.value || category.value || favOnly.value)
 )
 
 // Push a single query param update without blowing away the others
@@ -38,6 +44,15 @@ function setParam(key, value) {
 
 function clearAll() {
   router.replace({ query: {} })
+}
+
+function toggleFavOnly() {
+  if (favOnly.value) {
+    const { fav, ...rest } = route.query
+    router.replace({ query: rest })
+  } else {
+    router.replace({ query: { ...route.query, fav: '1', _open: '1' } })
+  }
 }
 
 // Toggling the panel: if already open and has filters, clear them + close
@@ -71,6 +86,10 @@ function toggleSearch() {
           <span v-else class="eyebrow">Browse</span>
           <h1>Exercise Library</h1>
         </div>
+        <button class="fav-toggle" :class="{ active: favOnly }" @click="toggleFavOnly"
+          aria-label="Show favourites only">
+          <FavoriteStar :active="favOnly" :size="16" />
+        </button>
         <button class="search-toggle" :class="{ active: panelOpen || hasFilters }" @click="toggleSearch"
           aria-label="Toggle search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -82,14 +101,8 @@ function toggleSearch() {
       </div>
 
       <div v-if="panelOpen" class="search-panel">
-        <input
-          :value="query"
-          type="text"
-          placeholder="Search by name…"
-          class="search-input"
-          autofocus
-          @input="setParam('q', $event.target.value)"
-        />
+        <input :value="query" type="text" placeholder="Search by name…" class="search-input" autofocus
+          @input="setParam('q', $event.target.value)" />
         <div class="filter-row">
           <select :value="equipment" @change="setParam('equipment', $event.target.value)">
             <option class="capitalize" value="">All equipment</option>
@@ -104,7 +117,8 @@ function toggleSearch() {
             <option class="capitalize" v-for="c in exercisesStore.categoryOptions" :key="c" :value="c">{{ c }}</option>
           </select>
         </div>
-        <p v-if="hasFilters" class="result-count">{{ exercises.length }} result{{ exercises.length === 1 ? '' : 's' }}</p>
+        <p v-if="hasFilters" class="result-count">{{ exercises.length }} result{{ exercises.length === 1 ? '' : 's' }}
+        </p>
       </div>
     </header>
   </div>
@@ -192,9 +206,26 @@ function toggleSearch() {
 
 .empty-state {
   grid-column: 1 / -1;
-  color: var(--color-text-dim);
-  font-size: 14px;
   margin-top: 24px;
   text-align: center;
+}
+
+.fav-toggle {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  border-radius: var(--radius);
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.fav-toggle.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 </style>

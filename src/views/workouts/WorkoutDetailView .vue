@@ -6,6 +6,8 @@ import { useExercisesStore } from '../../stores/exercises'
 import { useRecordsStore } from '../../stores/records'
 import { usePeopleStore } from '../../stores/people'
 import PRNewForm from '../../components/records/PRNewForm.vue'
+import FavoriteStar from '../../components/common/FavoriteStar.vue'
+import { useFavoritesStore } from '../../stores/favourites'
 import WorkoutQRSheet from '../../components/workouts/WorkoutQRSheet.vue'
 
 const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
@@ -16,6 +18,7 @@ const workoutsStore = useWorkoutsStore()
 const exercisesStore = useExercisesStore()
 const recordsStore = useRecordsStore()
 const peopleStore = usePeopleStore()
+const favouritesStore = useFavoritesStore()
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
 
@@ -85,7 +88,9 @@ function deleteWorkout() {
       <!-- 3-dot menu button -->
       <button class="dots-btn" @click="menuOpen = true" aria-label="Workout options">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+          <circle cx="12" cy="5" r="1.5" />
+          <circle cx="12" cy="12" r="1.5" />
+          <circle cx="12" cy="19" r="1.5" />
         </svg>
       </button>
     </header>
@@ -132,24 +137,30 @@ function deleteWorkout() {
     <div v-if="menuOpen" class="overlay" @click.self="menuOpen = false">
       <div class="sheet menu-sheet">
         <button class="menu-item" @click="goEdit">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>
           Edit workout
         </button>
         <button class="menu-item" @click="openQR">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/>
-            <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+            <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01" />
           </svg>
           Share / Scan QR
         </button>
         <button class="menu-item danger" @click="deleteWorkout">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
-            <path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6M14 11v6" />
+            <path d="M9 6V4h6v2" />
           </svg>
           Delete workout
         </button>
@@ -161,8 +172,17 @@ function deleteWorkout() {
     <div v-if="hintOpen && hintExercise" class="overlay" @click.self="hintOpen = false">
       <div class="sheet">
         <header class="sheet-header">
-          <h3 class="sheet-title">{{ hintExercise.name }}</h3>
-          <button class="close-btn" @click="hintOpen = false" aria-label="Close">×</button>
+          <h3 class="sheet-title">
+            {{ hintExercise.name }}
+            <div class="hint-fav-btn"
+              :aria-label="favouritesStore.isFavorite(hintExercise.id) ? 'Remove favorite' : 'Add to favourites'"
+              @click="favouritesStore.toggle(hintExercise.id)">
+              <FavoriteStar :active="favouritesStore.isFavorite(hintExercise.id)" :size="20" />
+            </div>
+          </h3>
+          <div class="sheet-header-actions">
+            <button class="close-btn" @click="hintOpen = false" aria-label="Close">×</button>
+          </div>
         </header>
         <div v-if="hintExercise.images?.length" class="image-row">
           <img v-for="(img, i) in hintExercise.images" :key="i" :src="IMAGE_BASE + img"
@@ -180,14 +200,6 @@ function deleteWorkout() {
 </template>
 
 <style scoped>
-.back-link {
-  display: inline-block;
-  color: var(--color-text-dim);
-  text-decoration: none;
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-
 .page-header {
   display: flex;
   align-items: flex-start;
@@ -215,16 +227,13 @@ function deleteWorkout() {
   border-radius: 6px;
 }
 
-.dots-btn:hover { color: var(--color-text); }
-
-.empty-state {
-  margin-top: 24px;
-  color: var(--color-text-dim);
-  font-size: 14px;
-  line-height: 1.5;
+.dots-btn:hover {
+  color: var(--color-text);
 }
 
-.accent-link { color: var(--color-accent); }
+.accent-link {
+  color: var(--color-accent);
+}
 
 .plan-list {
   list-style: none;
@@ -296,7 +305,12 @@ function deleteWorkout() {
   color: var(--color-text-dim);
 }
 
-.plan-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.plan-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
 
 .log-btn {
   padding: 6px 12px;
@@ -307,30 +321,18 @@ function deleteWorkout() {
 }
 
 /* ── Overlay / sheet ── */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: flex-end;
-  z-index: 20;
-}
-
 .sheet {
-  width: 100%;
   max-height: 78vh;
   overflow-y: auto;
-  background: var(--color-surface);
-  border-radius: 16px 16px 0 0;
-  padding: 18px 16px calc(28px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
 /* ── 3-dot menu sheet ── */
-.menu-sheet { gap: 4px; }
+.menu-sheet {
+  gap: 4px;
+}
 
 .menu-item {
   display: flex;
@@ -347,8 +349,13 @@ function deleteWorkout() {
   text-align: left;
 }
 
-.menu-item:hover { background: var(--color-surface-2); }
-.menu-item.danger { color: var(--color-danger); }
+.menu-item:hover {
+  background: var(--color-surface-2);
+}
+
+.menu-item.danger {
+  color: var(--color-danger);
+}
 
 .menu-cancel {
   width: 100%;
@@ -364,24 +371,14 @@ function deleteWorkout() {
 
 /* ── Hint sheet ── */
 .sheet-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
   gap: 12px;
 }
 
-.sheet-title { font-size: 16px; line-height: 1.3; flex: 1; }
-
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-dim);
-  font-size: 24px;
-  line-height: 1;
-  flex-shrink: 0;
+.sheet-title {
+  font-size: 16px;
+  line-height: 1.3;
+  flex: 1;
 }
-
-.image-row { display: flex; gap: 10px; overflow-x: auto; flex-shrink: 0; }
 
 .hint-img {
   height: 160px;
@@ -393,26 +390,21 @@ function deleteWorkout() {
   object-fit: cover;
 }
 
-.instructions {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.sheet-header-actions {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.step { display: flex; gap: 12px; align-items: flex-start; }
-
-.step-num {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--color-accent);
-  font-weight: 700;
-  width: 18px;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
-  padding-top: 2px;
 }
 
-.step-text { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-text); }
+.hint-fav-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  padding: 0;
+  margin: 0;
+  display: inline-block;
+  position: relative;
+  top: 2px;
+}
 </style>

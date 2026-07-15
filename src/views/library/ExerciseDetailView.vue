@@ -6,6 +6,8 @@ import { useWorkoutsStore } from '../../stores/workouts'
 import { useRecordsStore } from '../../stores/records'
 import { usePeopleStore } from '../../stores/people'
 import PRNewForm from '../../components/records/PRNewForm.vue'
+import FavoriteStar from '../../components/common/FavoriteStar.vue'
+import { useFavoritesStore } from '../../stores/favourites'
 
 // Base URL for exercise images — update this to wherever your images are hosted
 // const IMAGE_BASE = '/images/exercises/'
@@ -15,6 +17,7 @@ const route = useRoute()
 const router = useRouter()
 const exercisesStore = useExercisesStore()
 const workoutsStore = useWorkoutsStore()
+const favouritesStore = useFavoritesStore()
 const recordsStore = useRecordsStore()
 const peopleStore = usePeopleStore()
 
@@ -74,6 +77,11 @@ function handleSaved(payload) {
 
     <!-- Add to workout -->
     <div class="add-row">
+      <button class="add-button-outline fav-btn" :class="{ 'is-fav': favouritesStore.isFavorite(exercise?.id) }"
+        @click="favouritesStore.toggle(exercise?.id)"
+        :aria-label="favouritesStore.isFavorite(exercise?.id) ? 'Remove from favourites' : 'Add to favourites'">
+        <FavoriteStar :active="favouritesStore.isFavorite(exercise?.id)" :size="13" />
+      </button>
       <button v-if="peopleStore.activePersonId" class="add-button-outline steel" @click="prFormOpen = true">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
           stroke-linecap="round" stroke-linejoin="round">
@@ -170,11 +178,6 @@ function handleSaved(payload) {
 }
 
 .back-link {
-  all: unset;
-  display: inline-block;
-  color: var(--color-text-dim);
-  text-decoration: none;
-  font-size: 13px;
   margin-bottom: 14px;
 }
 
@@ -280,31 +283,8 @@ function handleSaved(payload) {
 }
 
 .muscle-chip {
-  font-family: var(--font-mono);
   font-size: 11px;
   padding: 3px 10px;
-  border-radius: 999px;
-  text-transform: capitalize;
-  white-space: nowrap;
-}  
-
-.muscle-chip.primary {
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
-  color: var(--color-accent);
-}
-
-.muscle-chip.secondary {
-  background: color-mix(in srgb, var(--color-steel) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-steel) 35%, transparent);
-  color: var(--color-steel);
-}
-
-/* ── Images ── */
-.image-row {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
 }
 
 .exercise-img {
@@ -317,42 +297,7 @@ function handleSaved(payload) {
   object-fit: cover;
 }
 
-/* ── Instructions ── */
-.instructions {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.step {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-}
-
-.step-num {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--color-accent);
-  font-weight: 700;
-  width: 18px;
-  flex-shrink: 0;
-  padding-top: 2px;
-}
-
-.step-text {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--color-text);
-}
-
 .empty-state {
-  color: var(--color-text-dim);
-  font-size: 14px;
   margin-bottom: 16px;
 }
 
@@ -417,42 +362,8 @@ function handleSaved(payload) {
 }
 
 /* ── Sheet ── */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: flex-end;
-  z-index: 20;
-}
-
 .sheet {
-  width: 100%;
   max-height: 60vh;
-  overflow-y: auto;
-  background: var(--color-surface);
-  border-radius: 16px 16px 0 0;
-  padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--color-border);
-}
-
-.sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.sheet-header h3 {
-  font-size: 16px;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-dim);
-  font-size: 24px;
-  line-height: 1;
 }
 
 .workout-list {
@@ -503,5 +414,18 @@ function handleSaved(payload) {
   color: var(--color-accent);
   font-size: 16px;
   font-weight: 700;
+}
+
+.fav-btn {
+  border-color: var(--color-border);
+  color: var(--color-text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fav-btn.is-fav {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 </style>

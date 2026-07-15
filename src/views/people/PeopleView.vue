@@ -183,13 +183,6 @@ function cancelEdit() {
   font-weight: 600;
 }
 
-.empty-state {
-  margin-top: 24px;
-  color: var(--color-text-dim);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
 .people-list {
   list-style: none;
   margin: 18px 0 0;

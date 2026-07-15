@@ -97,13 +97,6 @@ const muscles = (wid) => workoutsStore.targetedMuscles(wid)
   color: var(--color-accent);
 }
 
-.empty-state {
-  margin-top: 24px;
-  color: var(--color-text-dim);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
 .workout-list {
   list-style: none;
   margin: 16px 0 0;
@@ -129,9 +122,4 @@ const muscles = (wid) => workoutsStore.targetedMuscles(wid)
 }
 
 .add-form input { flex: 1; }
-
-.fab {
-  width: 100%;
-  margin-top: 18px;
-}
 </style>

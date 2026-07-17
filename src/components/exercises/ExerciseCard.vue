@@ -1,9 +1,12 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import FavoriteStar from "../common/FavoriteStar.vue";
+import { useFavoritesStore } from "../../stores/favourites.js";
 const router = useRouter()
 defineProps({
   exercise: { type: Object, required: true }
 })
+const favouritesStore = useFavoritesStore()
 
 const levelColor = {
   beginner: 'var(--color-green)',
@@ -18,6 +21,7 @@ const levelColor = {
 
     <div class="card-header">
       <span class="exercise-name">{{ exercise.name }}</span>
+      <FavoriteStar v-if="favouritesStore.isFavorite(exercise.id)" :active="true" :size="14" class="card-star" />
     </div>
 
     <div class="badges">
@@ -117,12 +121,7 @@ const levelColor = {
 }
 
 .muscle-chip {
-  font-family: var(--font-mono);
   font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  text-transform: capitalize;
-  white-space: nowrap;
 }
 
 .muscle-chip.primary {
@@ -157,5 +156,10 @@ const levelColor = {
   font-family: var(--font-mono);
   font-size: 10px;
   text-transform: capitalize;
+}
+
+.card-star {
+  color: var(--color-accent);
+  flex-shrink: 0;
 }
 </style>

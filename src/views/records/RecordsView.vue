@@ -117,16 +117,4 @@ function handleSaved(payload) {
   gap: 10px;
   margin-top: 16px;
 }
-
-.empty-state {
-  margin-top: 24px;
-  color: var(--color-text-dim);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.fab {
-  width: 100%;
-  margin-top: 18px;
-}
 </style>

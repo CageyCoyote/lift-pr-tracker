@@ -372,42 +372,11 @@ function close() {
 </template>
 
 <style scoped>
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: flex-end;
-  z-index: 20;
-}
-
 .sheet {
-  width: 100%;
   max-height: 80vh;
-  overflow-y: auto;
-  background: var(--color-surface);
-  border-radius: 16px 16px 0 0;
-  padding: 18px 16px calc(28px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.sheet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sheet-header h3 { font-size: 16px; }
-
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--color-text-dim);
-  font-size: 24px;
-  line-height: 1;
 }
 
 /* ── Tabs ── */

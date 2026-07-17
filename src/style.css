@@ -1,18 +1,18 @@
 :root {
   /* Brand Colors */
-  --color-accent: #c9a227; /* Energy — primary actions / denotes a PR / best lift */
+  --color-brass: #c9a227;
+  --color-accent: #c9a227;
   --color-bg: #15161a;
-  --color-steel: #5b7a8c; /* Steel - secondary actions */
-  /* Secondary Colors */
+  --color-deep-dark-blue: #15161a;
+  --color-steel: #5b7a8c;
   --color-accent-dim: #8a701c;
   --color-surface: #1e2024;
   --color-surface-2: #26292e;
-  /* Color tokens */
-  --color-border: #34373d; /* Stealth - borders / backgrounds */
-  --color-text: #ece9e2; /* - Chalk - text color */
+  --color-border: #34373d;
+  --color-text: #ece9e2;
   --color-text-dim: #9a9ca3;
-  --color-danger: #c1443c; /* Pump - danger / hard difficulty */
-  --color-green: #4a9e6b; /* Recovery - easy difficulty */
+  --color-danger: #c1443c;
+  --color-green: #4a9e6b;
 
   /* Type tokens */
   --font-display: "Oswald", sans-serif;
@@ -21,22 +21,47 @@
 
   --radius: 10px;
   --nav-height: 64px;
-
-  /* light Theme */
-  /* Background*/
-  /* --color-light-theme-background: #F8F9FA; */
-  /* Surface / Cards */
-  /* --color-light-theme-surface: #F8F9FA; */
-  /* --color-light-theme-surface-2: #dddddd; */
-  /* Text Primary (near black) */
-  /* --color-light-theme-text: #1F1F1F; */
-  /* Text Secondary */
-  /* --color-text-dim: #575757;; */
-  /* Inactive Tab  (light gray) */
-  /* --color-light-theme-backgound2: #E5E7EB; */
-  /* Borders / Dividers, */
-  /* --color-light-theme-border: #ababab; */
+  /* Height of the fixed account icon — pages pad their top by this amount */
+  --account-btn-clearance: 52px;
 }
+
+/* ── Light theme ──────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --color-bg:       #F8F9FA;
+  --color-surface:  #FFFFFF;
+  --color-surface-2: #E5E7EB;
+  --color-border:   #ababab;
+  --color-text:     #1F1F1F;
+  --color-text-dim: #575757;
+  --color-accent:   #c9a227;
+  --color-steel:    #5b7a8c;
+  --color-danger:   #c1443c;
+  --color-green:    #4a9e6b;
+}
+
+/* Primary muscle chips use brass text which is borderline contrast on white.
+   In light mode we darken the text and give the chip a stronger background. */
+[data-theme="light"] .muscle-chip.primary {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+  color: #7a600a;  /* darkened brass — passes AA contrast on white */
+}
+
+/* ── Steel theme ──────────────────────────────────────────────────────────── */
+[data-theme="steel"] {
+  --color-bg:        #2a2d31;
+  --color-surface:   #32363b;
+  --color-surface-2: #3b3f45;
+  --color-border:    #4a4f57;
+  --color-text:      #e8eaed;
+  --color-text-dim:  #8f9399;
+  --color-accent:    #c9a227;
+  --color-steel:     #5b7a8c;
+  --color-danger:    #c1443c;
+  --color-green:     #4a9e6b;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 * {
   box-sizing: border-box;
@@ -115,7 +140,8 @@ a:focus-visible {
 .page {
   max-width: 640px;
   margin: 0 auto;
-  padding: 20px 16px 32px;
+  /* Push content below the fixed account icon */
+  padding: var(--account-btn-clearance) 16px 32px;
 }
 
 .eyebrow {
@@ -125,6 +151,140 @@ a:focus-visible {
   text-transform: uppercase;
   color: var(--color-text-dim);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+    SHARED COMPONENT UTILITIES
+    Patterns repeated verbatim across 4+ unrelated files.
+    Scoped styles in individual components should be removed in favour of these.
+  ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Bottom sheet overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-end;
+  z-index: 20;
+}
+
+.sheet {
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-radius: 16px 16px 0 0;
+  padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-border);
+}
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sheet-header h3 {
+  font-size: 16px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-size: 24px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+/* ── Back navigation link ── */
+.back-link {
+  all: unset;
+  display: inline-block;
+  color: var(--color-text-dim);
+  text-decoration: none;
+  font-size: 13px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+/* ── Empty state message ── */
+.empty-state {
+  margin-top: 24px;
+  color: var(--color-text-dim);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Muscle chips ── */
+.muscle-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.muscle-chip.primary {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 38%, transparent);
+  color: var(--color-accent);
+}
+
+.muscle-chip.secondary {
+  background: color-mix(in srgb, var(--color-steel) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-steel) 50%, transparent);
+  color: var(--color-steel);
+}
+
+/* ── Full-width Action Button f.a.b.  ── */
+.fab {
+  width: 100%;
+  margin-top: 18px;
+}
+
+/* ── Exercise instructions ── */
+.instructions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.step-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-accent);
+  font-weight: 700;
+  width: 18px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.step-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+/* ── Exercise image row (detail + workout hint sheet) ── */
+.image-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+/* Media Query */
 
 @media (prefers-reduced-motion: reduce) {
   * {

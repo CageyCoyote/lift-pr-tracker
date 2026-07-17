@@ -19,10 +19,19 @@ export const usePeopleStore = defineStore('people', () => {
   }
 
   function removePerson(id) {
+    // Guard — must always have at least one person
+    if (people.value.length <= 1) return
     people.value = people.value.filter((p) => p.id !== id)
     if (activePersonId.value === id) {
       activePersonId.value = people.value[0]?.id ?? null
     }
+  }
+
+  function renamePerson(id, newName) {
+    const trimmed = newName?.trim()
+    if (!trimmed) return
+    const person = people.value.find((p) => p.id === id)
+    if (person) person.name = trimmed
   }
 
   function setActivePerson(id) {
@@ -30,10 +39,9 @@ export const usePeopleStore = defineStore('people', () => {
   }
 
   function getActivePerson() {
-    if (activePersonId.value == null) { return }
-    let one = people?.value?.filter(p => p?.id === activePersonId?.value)[0]
-    return one
+    if (activePersonId.value == null) return
+    return people.value.find((p) => p.id === activePersonId.value)
   }
 
-  return { people, activePersonId, addPerson, removePerson, setActivePerson, getActivePerson }
+  return { people, activePersonId, addPerson, removePerson, renamePerson, setActivePerson, getActivePerson }
 })

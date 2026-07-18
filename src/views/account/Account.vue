@@ -58,70 +58,71 @@ function exportWorkouts() {
     <button class="back-link" @click="router.back()">← Back</button>
 
     <header class="page-header">
-      <span class="eyebrow">Preferences</span>
-      <h1>Account</h1>
+      <!-- <span class="eyebrow">Preferences</span> -->
+      <h1>Preferences</h1>
+      <!-- <h1>Account</h1> -->
     </header>
 
     <!-- Active person -->
-    <button v-if="peopleStore.getActivePerson()" class="active-person" @click="switcherOpen = true">
-      <div
-        class="person-avatar"
-        :style="{ background: settingsStore.effectiveIconColor(peopleStore.activePersonId) }"
-      >
-        {{ peopleStore.getActivePerson().name.charAt(0).toUpperCase() }}
+    <section class="section">
+      <h2 class="section-title">Account</h2>
+      <button v-if="peopleStore.getActivePerson()" class="active-person" @click="switcherOpen = true">
+        <div class="person-avatar"
+          :style="{ background: settingsStore.effectiveIconColor(peopleStore.activePersonId) }">
+          {{ peopleStore.getActivePerson().name.charAt(0).toUpperCase() }}
+        </div>
+        <div class="person-info">
+          <span class="eyebrow">Active lifter</span>
+          <span class="person-name">{{ peopleStore.getActivePerson().name }}</span>
+        </div>
+        <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+      <div v-else class="no-person-note">
+        No active person selected. <router-link to="/people">Add one →</router-link>
       </div>
-      <div class="person-info">
-        <span class="eyebrow">Active lifter</span>
-        <span class="person-name">{{ peopleStore.getActivePerson().name }}</span>
-      </div>
-      <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="9 18 15 12 9 6"/>
-      </svg>
-    </button>
-    <div v-else class="no-person-note">
-      No active person selected. <router-link to="/people">Add one →</router-link>
-    </div>
+    </section>
 
     <!-- Theme -->
     <section class="section">
       <h2 class="section-title">Theme</h2>
       <div class="theme-toggle">
-        <button
-          class="theme-btn"
-          :class="{ active: settingsStore.theme === 'dark' }"
-          @click="settingsStore.setTheme('dark')"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        <button class="theme-btn" :class="{ active: settingsStore.theme === 'dark' }"
+          @click="settingsStore.setTheme('dark')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
           </svg>
           Dark
         </button>
-        <button
-          class="theme-btn"
-          :class="{ active: settingsStore.theme === 'light' }"
-          @click="settingsStore.setTheme('light')"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5"/>
-            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        <button class="theme-btn" :class="{ active: settingsStore.theme === 'light' }"
+          @click="settingsStore.setTheme('light')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
           </svg>
           Light
         </button>
-        <button
-          class="theme-btn"
-          :class="{ active: settingsStore.theme === 'steel' }"
-          @click="settingsStore.setTheme('steel')"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
-            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
-            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
-            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
-            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+        <button class="theme-btn" :class="{ active: settingsStore.theme === 'steel' }"
+          @click="settingsStore.setTheme('steel')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="4" />
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
           </svg>
           Steel
         </button>
@@ -137,17 +138,10 @@ function exportWorkouts() {
         </span>
       </h2>
       <div class="swatch-grid">
-        <button
-          v-for="c in ICON_COLORS"
-          :key="c.hex"
-          class="swatch"
+        <button v-for="c in ICON_COLORS" :key="c.hex" class="swatch"
           :class="{ selected: settingsStore.getIconColor(peopleStore.activePersonId) === c.hex }"
-          :style="{ '--swatch': c.hex }"
-          :aria-label="c.label"
-          :title="c.label"
-          :disabled="!peopleStore.activePersonId"
-          @click="settingsStore.setIconColor(peopleStore.activePersonId, c.hex)"
-        >
+          :style="{ '--swatch': c.hex }" :aria-label="c.label" :title="c.label" :disabled="!peopleStore.activePersonId"
+          @click="settingsStore.setIconColor(peopleStore.activePersonId, c.hex)">
           <span class="swatch-dot" />
           <span class="swatch-label">{{ c.label }}</span>
         </button>
@@ -162,19 +156,21 @@ function exportWorkouts() {
       </p>
       <div class="export-row">
         <button class="export-btn" @click="exportPRs" :disabled="recordsStore.entries.length === 0">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
           Export PRs
           <span class="export-count">{{ recordsStore.entries.length }} entries</span>
         </button>
         <button class="export-btn" @click="exportWorkouts" :disabled="workoutsStore.workouts.length === 0">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
           Export Workouts
           <span class="export-count">{{ workoutsStore.workouts.length }} workouts</span>
@@ -191,23 +187,16 @@ function exportWorkouts() {
         </header>
         <ul class="switcher-list">
           <li v-for="p in peopleStore.people" :key="p.id">
-            <button
-              class="switcher-row"
-              :class="{ active: p.id === peopleStore.activePersonId }"
-              @click="peopleStore.setActivePerson(p.id); switcherOpen = false"
-            >
-              <div
-                class="switcher-avatar"
-                :style="{ background: settingsStore.effectiveIconColor(p.id) }"
-              >
+            <button class="switcher-row" :class="{ active: p.id === peopleStore.activePersonId }"
+              @click="peopleStore.setActivePerson(p.id); switcherOpen = false">
+              <div class="switcher-avatar" :style="{ background: settingsStore.effectiveIconColor(p.id) }">
                 {{ p.name.charAt(0).toUpperCase() }}
               </div>
               <span class="switcher-name">{{ p.name }}</span>
-              <svg v-if="p.id === peopleStore.activePersonId"
-                width="16" height="16" viewBox="0 0 24 24" fill="none"
-                :stroke="settingsStore.effectiveIconColor(p.id)"
-                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
+              <svg v-if="p.id === peopleStore.activePersonId" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                :stroke="settingsStore.effectiveIconColor(p.id)" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
               </svg>
             </button>
           </li>

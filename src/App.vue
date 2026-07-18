@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import AppNav from './components/common/AppNav.vue'
+import InstallBanner from './components/common/InstallBanner.vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from './stores/settings'
 import { usePeopleStore } from './stores/people'
@@ -28,6 +29,7 @@ onMounted(() => settingsStore.applyTheme())
 
   <router-view />
   <AppNav />
+  <InstallBanner />
 </template>
 
 <style scoped>

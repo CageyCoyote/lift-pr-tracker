@@ -2,9 +2,9 @@
 import { ref, watch } from 'vue'
 import ExercisePicker from '../exercises/ExercisePicker.vue'
 import PersonSelector from '../common/PersonSelector.vue'
-import { usePeopleStore } from '../../stores/people'
+import { useCurrentUser } from "../../composables/useCurrentUser.js";
 
-const peopleStore = usePeopleStore()
+const { userId } = useCurrentUser()
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -106,7 +106,7 @@ function save() {
           <button v-if="!initialExercise" type="button" class="btn" @click="step = 'pick'">
             Back
           </button>
-          <button type="submit" class="btn btn-accent" :disabled="!peopleStore.activePersonId">Save PR</button>
+          <button type="submit" class="btn btn-accent" :disabled="!userId">Save PR</button>
         </div>
       </form>
     </div>

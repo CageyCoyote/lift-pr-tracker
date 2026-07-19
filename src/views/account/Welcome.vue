@@ -15,7 +15,7 @@ function submit() {
     error.value = 'Please enter your name.'
     return
   }
-  peopleStore.addPerson(trimmed)
+  peopleStore.addPerson(trimmed, { primary: true })
   router.replace('/')
 }
 </script>

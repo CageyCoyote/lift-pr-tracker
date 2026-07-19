@@ -4,11 +4,11 @@ import AppNav from './components/common/AppNav.vue'
 import InstallBanner from './components/common/InstallBanner.vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from './stores/settings'
-import { usePeopleStore } from './stores/people'
+import { useCurrentUser } from "./composables/useCurrentUser.js";
 
 const router = useRouter()
 const settingsStore = useSettingsStore()
-const peopleStore = usePeopleStore()
+const {userId} = useCurrentUser()
 
 onMounted(() => settingsStore.applyTheme())
 </script>
@@ -16,7 +16,7 @@ onMounted(() => settingsStore.applyTheme())
 <template>
   <button
     class="account-btn"
-    :style="{ color: settingsStore.effectiveIconColor(peopleStore.activePersonId) }"
+    :style="{ color: settingsStore.effectiveIconColor(userId) }"
     aria-label="Account & Settings"
     @click="router.push('/account')"
   >

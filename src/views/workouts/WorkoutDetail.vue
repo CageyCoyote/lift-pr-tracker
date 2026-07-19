@@ -4,11 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { useWorkoutsStore } from '../../stores/workouts'
 import { useExercisesStore } from '../../stores/exercises'
 import { useRecordsStore } from '../../stores/records'
-import { usePeopleStore } from '../../stores/people'
 import PRNewForm from '../../components/records/PRNewForm.vue'
 import FavoriteStar from '../../components/common/FavoriteStar.vue'
 import { useFavoritesStore } from '../../stores/favourites'
 import WorkoutQRSheet from '../../components/workouts/WorkoutQRSheet.vue'
+import { useCurrentUser } from "../../composables/useCurrentUser.js";
 
 const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
 
@@ -17,8 +17,8 @@ const router = useRouter()
 const workoutsStore = useWorkoutsStore()
 const exercisesStore = useExercisesStore()
 const recordsStore = useRecordsStore()
-const peopleStore = usePeopleStore()
 const favouritesStore = useFavoritesStore()
+const { userId } = useCurrentUser()
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
 
@@ -37,8 +37,8 @@ const menuOpen = ref(false)
 const qrOpen = ref(false)
 
 function bestNote(exerciseId) {
-  if (!peopleStore.activePersonId) return null
-  return recordsStore.bestFor(peopleStore.activePersonId, exerciseId)
+  if (!userId) return null
+  return recordsStore.bestFor(userId.value, exerciseId)
 }
 
 function openLog(item) {
@@ -47,7 +47,7 @@ function openLog(item) {
 }
 
 function handleSaved(payload) {
-  recordsStore.addEntry({ personId: peopleStore.activePersonId, ...payload })
+  recordsStore.addEntry({ personId: userId.value, ...payload })
 }
 
 function openExerciseHint(item) {
@@ -122,7 +122,7 @@ function deleteWorkout() {
           </div>
         </div>
         <div class="plan-actions">
-          <button v-if="peopleStore.activePersonId" class="btn log-btn" @click="openLog(item)">+ PR</button>
+          <button v-if="userId" class="btn log-btn" @click="openLog(item)">+ PR</button>
         </div>
       </li>
     </ul>

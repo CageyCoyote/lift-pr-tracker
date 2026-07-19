@@ -105,9 +105,13 @@ function cancelEdit() {
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
             </button>
-            <button class="icon-btn danger" :disabled="peopleStore.people.length <= 1"
-              :title="peopleStore.people.length <= 1 ? 'Cannot remove the last person' : 'Remove'" aria-label="Remove"
-              @click="peopleStore.removePerson(p.id)">×</button>
+            <button
+              class="icon-btn danger"
+              :disabled="p.isPrimary || peopleStore.people.length <= 1"
+              :title="p.isPrimary ? 'Cannot remove the primary account' : peopleStore.people.length <= 1 ? 'Cannot remove the last person' : 'Remove'"
+              aria-label="Remove"
+              @click="peopleStore.removePerson(p.id)"
+            >×</button>
           </div>
         </template>
 

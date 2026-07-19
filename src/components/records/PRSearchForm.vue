@@ -93,7 +93,7 @@ function save() {
           <input v-model="date" type="date" />
         </label>
         <div class="actions">
-          <button v-if="!initialExercise" type="button" class="btn" @click="step = 'pick'">
+          <button type="button" class="btn" @click="step = 'pick'">
             Back
           </button>
           <button type="submit" class="btn btn-accent">Save PR</button>

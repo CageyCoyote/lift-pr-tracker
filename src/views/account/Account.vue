@@ -6,6 +6,7 @@ import { useRecordsStore } from '../../stores/records'
 import { useWorkoutsStore } from '../../stores/workouts'
 import { usePeopleStore } from '../../stores/people'
 import { useInstallPrompt } from '../../composables/useInstallPrompt'
+import { useCurrentUser } from "../../composables/useCurrentUser";
 
 const route = useRoute()
 const router = useRouter()
@@ -13,6 +14,7 @@ const settingsStore = useSettingsStore()
 const recordsStore = useRecordsStore()
 const workoutsStore = useWorkoutsStore()
 const peopleStore = usePeopleStore()
+const { userId, activeUser } = useCurrentUser()
 const { canInstall, isIOS, isInstalled, promptInstall } = useInstallPrompt()
 
 const switcherOpen = ref(false)
@@ -68,14 +70,13 @@ function exportWorkouts() {
     <!-- Active person -->
     <section class="section">
       <h2 class="section-title">Account</h2>
-      <button v-if="peopleStore.getActivePerson()" class="active-person" @click="switcherOpen = true">
-        <div class="person-avatar"
-          :style="{ background: settingsStore.effectiveIconColor(peopleStore.activePersonId) }">
-          {{ peopleStore.getActivePerson().name.charAt(0).toUpperCase() }}
+      <button v-if="activeUser" class="active-person" @click="switcherOpen = true">
+        <div class="person-avatar" :style="{ background: settingsStore.effectiveIconColor(userId) }">
+          {{ activeUser.name.charAt(0).toUpperCase() }}
         </div>
         <div class="person-info">
           <span class="eyebrow">Active lifter</span>
-          <span class="person-name">{{ peopleStore.getActivePerson().name }}</span>
+          <span class="person-name">{{ activeUser.name }}</span>
         </div>
         <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -135,15 +136,14 @@ function exportWorkouts() {
     <section class="section">
       <h2 class="section-title">
         Icon Color
-        <span v-if="peopleStore.getActivePerson()" class="section-person">
-          — {{ peopleStore.getActivePerson().name }}
+        <span v-if="activeUser" class="section-person">
+          — {{ activeUser.name }}
         </span>
       </h2>
       <div class="swatch-grid">
         <button v-for="c in ICON_COLORS" :key="c.hex" class="swatch"
-          :class="{ selected: settingsStore.getIconColor(peopleStore.activePersonId) === c.hex }"
-          :style="{ '--swatch': c.hex }" :aria-label="c.label" :title="c.label" :disabled="!peopleStore.activePersonId"
-          @click="settingsStore.setIconColor(peopleStore.activePersonId, c.hex)">
+          :class="{ selected: settingsStore.getIconColor(userId) === c.hex }" :style="{ '--swatch': c.hex }"
+          :aria-label="c.label" :title="c.label" :disabled="!userId" @click="settingsStore.setIconColor(userId, c.hex)">
           <span class="swatch-dot" />
           <span class="swatch-label">{{ c.label }}</span>
         </button>
@@ -156,9 +156,9 @@ function exportWorkouts() {
 
       <!-- Already installed as PWA -->
       <div v-if="isInstalled" class="install-row installed">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-green)"
-          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-green)" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12" />
         </svg>
         <span>Installed on this device</span>
       </div>
@@ -178,11 +178,11 @@ function exportWorkouts() {
           <span class="install-label">Add to Home Screen</span>
           <span class="install-sub">
             Tap
-            <svg class="share-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-              <polyline points="16 6 12 2 8 6"/>
-              <line x1="12" y1="2" x2="12" y2="15"/>
+            <svg class="share-icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
             then "Add to Home Screen"
           </span>
@@ -234,13 +234,13 @@ function exportWorkouts() {
         </header>
         <ul class="switcher-list">
           <li v-for="p in peopleStore.people" :key="p.id">
-            <button class="switcher-row" :class="{ active: p.id === peopleStore.activePersonId }"
+            <button class="switcher-row" :class="{ active: p.id === userId }"
               @click="peopleStore.setActivePerson(p.id); switcherOpen = false">
               <div class="switcher-avatar" :style="{ background: settingsStore.effectiveIconColor(p.id) }">
                 {{ p.name.charAt(0).toUpperCase() }}
               </div>
               <span class="switcher-name">{{ p.name }}</span>
-              <svg v-if="p.id === peopleStore.activePersonId" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              <svg v-if="p.id === userId" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 :stroke="settingsStore.effectiveIconColor(p.id)" stroke-width="2.5" stroke-linecap="round"
                 stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12" />
@@ -547,6 +547,7 @@ function exportWorkouts() {
   font-size: 11px;
   color: var(--color-text-dim);
 }
+
 /* ── Install section ── */
 .install-row {
   display: flex;
@@ -566,7 +567,9 @@ function exportWorkouts() {
   justify-content: flex-start;
 }
 
-.install-row.muted { justify-content: flex-start; }
+.install-row.muted {
+  justify-content: flex-start;
+}
 
 .install-text {
   display: flex;
@@ -602,5 +605,4 @@ function exportWorkouts() {
   flex-shrink: 0;
   color: var(--color-steel);
 }
-
 </style>

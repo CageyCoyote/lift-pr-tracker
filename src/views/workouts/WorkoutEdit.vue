@@ -4,16 +4,16 @@ import { useRoute, useRouter } from 'vue-router'
 import { useWorkoutsStore } from '../../stores/workouts'
 import { useExercisesStore } from '../../stores/exercises'
 import { useRecordsStore } from '../../stores/records'
-import { usePeopleStore } from '../../stores/people'
 import ExercisePicker from '../../components/exercises/ExercisePicker.vue'
 import PRForm from '../../components/records/PRForm.vue'
+import { useCurrentUser } from "../../composables/useCurrentUser.js";
 
 const route = useRoute()
 const router = useRouter()
 const workoutsStore = useWorkoutsStore()
 const exercisesStore = useExercisesStore()
 const recordsStore = useRecordsStore()
-const peopleStore = usePeopleStore()
+const { userId } = useCurrentUser()
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
 
@@ -22,7 +22,6 @@ const formOpen = ref(false)
 const logExercise = ref(null)
 const renaming = ref(false)
 const titleDraft = ref('')
-const currentPerson = computed(() => peopleStore.getActivePerson())
 
 function addExercise(ex) {
   workoutsStore.addExercise(workout.value.id, ex)
@@ -30,8 +29,8 @@ function addExercise(ex) {
 }
 
 function bestNote(exerciseId) {
-  if (!peopleStore.activePersonId) return null
-  return recordsStore.bestFor(peopleStore.activePersonId, exerciseId)
+  if (!userId) return null
+  return recordsStore.bestFor(userId, exerciseId)
 }
 
 function openLog(item) {
@@ -40,7 +39,7 @@ function openLog(item) {
 }
 
 function handleSaved(payload) {
-  recordsStore.addEntry({ personId: peopleStore.activePersonId, ...payload })
+  recordsStore.addEntry({ personId: userId, ...payload })
 }
 
 function startRename() {

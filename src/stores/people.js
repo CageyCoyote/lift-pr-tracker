@@ -9,18 +9,25 @@ export const usePeopleStore = defineStore('people', () => {
   watch(people, (v) => save('people', v), { deep: true })
   watch(activePersonId, (v) => save('activePersonId', v))
 
-  function addPerson(name) {
+  function addPerson(name, { primary = false } = {}) {
     const trimmed = name.trim()
     if (!trimmed) return
-    const person = { id: crypto.randomUUID(), name: trimmed }
+    const person = {
+      id: crypto.randomUUID(),
+      name: trimmed,
+      // isPrimary marks the account owner created at first launch.
+      // Only one person should ever have this flag — set via WelcomeView.
+      isPrimary: primary,
+    }
     people.value.push(person)
     if (!activePersonId.value) activePersonId.value = person.id
     return person
   }
 
   function removePerson(id) {
-    // Guard — must always have at least one person
-    if (people.value.length <= 1) return
+    const person = people.value.find((p) => p.id === id)
+    // Cannot delete the primary user or the last remaining person
+    if (!person || person.isPrimary || people.value.length <= 1) return
     people.value = people.value.filter((p) => p.id !== id)
     if (activePersonId.value === id) {
       activePersonId.value = people.value[0]?.id ?? null
@@ -43,5 +50,19 @@ export const usePeopleStore = defineStore('people', () => {
     return people.value.find((p) => p.id === activePersonId.value)
   }
 
-  return { people, activePersonId, addPerson, removePerson, renamePerson, setActivePerson, getActivePerson }
+  // The account owner — stable regardless of array order or deletions
+  function getPrimaryUser() {
+    return people.value.find((p) => p.isPrimary) ?? people.value[0] ?? null
+  }
+
+  return {
+    people,
+    activePersonId,
+    addPerson,
+    removePerson,
+    renamePerson,
+    setActivePerson,
+    getActivePerson,
+    getPrimaryUser,
+  }
 })

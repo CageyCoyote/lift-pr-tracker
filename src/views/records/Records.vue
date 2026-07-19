@@ -1,19 +1,19 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { usePeopleStore } from '../../stores/people'
 import { useRecordsStore } from '../../stores/records'
 import PersonSelector from '../../components/common/PersonSelector.vue'
 import PRCard from '../../components/records/PRCard.vue'
 import PRSearchForm from '../../components/records/PRSearchForm.vue'
+import { useCurrentUser } from "../../composables/useCurrentUser.js";
 
-const peopleStore = usePeopleStore()
 const recordsStore = useRecordsStore()
+const { userId } = useCurrentUser()
 const formOpen = ref(false)
 
 const sortBy = ref('date')
 
 const bests = computed(() =>
-  peopleStore.activePersonId ? recordsStore.bestsForPerson(peopleStore.activePersonId) : []
+  userId ? recordsStore.bestsForPerson(userId.value) : []
 )
 
 const sortedBests = computed(() => {
@@ -42,7 +42,7 @@ const sortedBests = computed(() => {
 })
 
 function handleSaved(payload) {
-  recordsStore.addEntry({ personId: peopleStore.activePersonId, ...payload })
+  recordsStore.addEntry({ personId: userId.value, ...payload })
 }
 </script>
 
@@ -54,7 +54,7 @@ function handleSaved(payload) {
 
     <PersonSelector />
 
-    <div v-if="!peopleStore.activePersonId" class="empty-state">
+    <div v-if="!userId" class="empty-state">
       Add a person on the People tab to start logging PRs.
     </div>
 
@@ -71,8 +71,8 @@ function handleSaved(payload) {
           </select>
         </div>
         <div class="card-list">
-          <PRCard v-for="b in sortedBests" :key="b.exerciseId" :person-id="peopleStore.activePersonId"
-            :exercise-id="b.exerciseId" :best="b.best" />
+          <PRCard v-for="b in sortedBests" :key="b.exerciseId" :person-id="userId" :exercise-id="b.exerciseId"
+            :best="b.best" />
         </div>
       </template>
 
@@ -80,7 +80,7 @@ function handleSaved(payload) {
     </template>
 
     <!-- search the library for a new PR -->
-    <PRSearchForm v-model="formOpen" :person-id="peopleStore.activePersonId" @saved="handleSaved" />
+    <PRSearchForm v-model="formOpen" :person-id="userId" @saved="handleSaved" />
   </div>
 </template>
 

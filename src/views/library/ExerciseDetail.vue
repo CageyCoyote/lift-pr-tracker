@@ -4,10 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useExercisesStore } from '../../stores/exercises'
 import { useWorkoutsStore } from '../../stores/workouts'
 import { useRecordsStore } from '../../stores/records'
-import { usePeopleStore } from '../../stores/people'
 import PRNewForm from '../../components/records/PRNewForm.vue'
 import FavoriteStar from '../../components/common/FavoriteStar.vue'
 import { useFavoritesStore } from '../../stores/favourites'
+import { useCurrentUser } from "../../composables/useCurrentUser.js"
 
 // Base URL for exercise images — update this to wherever your images are hosted
 // const IMAGE_BASE = '/images/exercises/'
@@ -19,7 +19,7 @@ const exercisesStore = useExercisesStore()
 const workoutsStore = useWorkoutsStore()
 const favouritesStore = useFavoritesStore()
 const recordsStore = useRecordsStore()
-const peopleStore = usePeopleStore()
+const { userId } = useCurrentUser()
 
 const exercise = computed(() => exercisesStore.getById(route.params.id))
 
@@ -53,7 +53,7 @@ function addToWorkout(workout) {
 const prFormOpen = ref(false)
 
 function handleSaved(payload) {
-  recordsStore.addEntry({ personId: peopleStore.activePersonId, ...payload })
+  recordsStore.addEntry({ personId: userId, ...payload })
 }
 </script>
 
@@ -82,7 +82,7 @@ function handleSaved(payload) {
         :aria-label="favouritesStore.isFavorite(exercise?.id) ? 'Remove from favourites' : 'Add to favourites'">
         <FavoriteStar :active="favouritesStore.isFavorite(exercise?.id)" :size="13" />
       </button>
-      <button v-if="peopleStore.activePersonId" class="add-button-outline steel" @click="prFormOpen = true">
+      <button v-if="userId" class="add-button-outline steel" @click="prFormOpen = true">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
           stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19" />

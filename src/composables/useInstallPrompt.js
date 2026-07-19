@@ -1,34 +1,39 @@
 import { ref, readonly } from 'vue'
 
-// Module-level so the event is captured as early as possible,
-// before any component mounts and potentially misses it.
 let _deferredPrompt = null
-const _canInstall = ref(false)
-const _isIOS = ref(false)
+const _canInstall  = ref(false)
+const _isIOS       = ref(false)
 const _isInstalled = ref(false)
 
-// Detect iOS Safari (no beforeinstallprompt support)
-const ua = navigator.userAgent
-_isIOS.value = /iphone|ipad|ipod/i.test(ua) && !/crios|fxios/i.test(ua)
+// Called from main.js before createApp() so the listener
+// is registered as early as possible — never misses the event.
+export function initInstallPrompt() {
+  const ua = navigator.userAgent
 
-// Detect already running as installed PWA
-_isInstalled.value =
-  window.matchMedia('(display-mode: standalone)').matches ||
-  window.navigator.standalone === true
+  _isIOS.value = /iphone|ipad|ipod/i.test(ua) && !/crios|fxios/i.test(ua)
 
-// Intercept the native prompt as early as possible
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault()
-  _deferredPrompt = e
-  _canInstall.value = true
-})
+  _isInstalled.value =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true
 
-// Clean up if user installs from browser UI directly
-window.addEventListener('appinstalled', () => {
-  _deferredPrompt = null
-  _canInstall.value = false
-  _isInstalled.value = true
-})
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault()
+    _deferredPrompt = e
+    _canInstall.value = true
+  })
+
+  window.addEventListener('appinstalled', () => {
+    _deferredPrompt = null
+    _canInstall.value = false
+    _isInstalled.value = true
+  })
+
+  // Keep isInstalled in sync if the display mode changes
+  // (e.g. user installs mid-session)
+  window.matchMedia('(display-mode: standalone)').addEventListener('change', (e) => {
+    _isInstalled.value = e.matches
+  })
+}
 
 export function useInstallPrompt() {
   async function promptInstall() {
@@ -41,8 +46,8 @@ export function useInstallPrompt() {
   }
 
   return {
-    canInstall: readonly(_canInstall),
-    isIOS: readonly(_isIOS),
+    canInstall:  readonly(_canInstall),
+    isIOS:       readonly(_isIOS),
     isInstalled: readonly(_isInstalled),
     promptInstall,
   }

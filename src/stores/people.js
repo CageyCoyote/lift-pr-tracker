@@ -6,6 +6,13 @@ export const usePeopleStore = defineStore('people', () => {
   const people = ref(load('people', []))
   const activePersonId = ref(load('activePersonId', null))
 
+  // One-time migration: existing users have no isPrimary flag.
+  // Set it on people[0] if nobody has it yet — runs once, then
+  // the watch below persists the updated shape to IDB.
+  if (people.value.length > 0 && !people.value.some(p => p.isPrimary)) {
+    people.value[0].isPrimary = true
+  }
+
   watch(people, (v) => save('people', v), { deep: true })
   watch(activePersonId, (v) => save('activePersonId', v))
 

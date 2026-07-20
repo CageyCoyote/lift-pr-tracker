@@ -10,8 +10,8 @@ import Account from '../views/account/Account.vue'
 import Welcome from '../views/account/Welcome.vue'
 
 export const router = createRouter({
-  history: createWebHistory(import.meta.env.VUE_APP_BASE_URL || ''),
-  base: import.meta.env.VUE_APP_BASE_URL || '/',
+  history: createWebHistory(import.meta.env.VITE_BASE_URL || ''),
+  base: import.meta.env.VITE_BASE_URL || '/',
   routes: [
     { path: '/welcome', name: 'welcome', component: Welcome, meta: { skipGuard: true } },
     { path: '/', name: 'records', component: Records },

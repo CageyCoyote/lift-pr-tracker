@@ -2,10 +2,11 @@
   /* Brand Colors */
   --color-brass: #c9a227;
   --color-accent: #c9a227;
+  --color-accent-dim: #8a701c;
+  /* --color-accent-light: #e7bb2c; */
   --color-bg: #15161a;
   --color-deep-dark-blue: #15161a;
   --color-steel: #5b7a8c;
-  --color-accent-dim: #8a701c;
   --color-surface: #1e2024;
   --color-surface-2: #26292e;
   --color-border: #34373d;
@@ -34,9 +35,11 @@
   --color-text:     #1F1F1F;
   --color-text-dim: #575757;
   --color-accent:   #c9a227;
+  --color-accent-dim:   #8a701c;
   --color-steel:    #5b7a8c;
   --color-danger:   #c1443c;
-  --color-green:    #4a9e6b;
+  /* --color-green:    #4a9e6b; */
+  --color-green:    #44b51c;
 }
 
 /* Primary muscle chips use brass text which is borderline contrast on white.
@@ -56,6 +59,8 @@
   --color-text:      #e8eaed;
   --color-text-dim:  #8f9399;
   --color-accent:    #c9a227;
+  --color-accent-dim: #8a701c;
+  --color-accent-light: #e7bb2c;
   --color-steel:     #5b7a8c;
   --color-danger:    #c1443c;
   --color-green:     #4a9e6b;
@@ -151,7 +156,15 @@ a:focus-visible {
   text-transform: uppercase;
   color: var(--color-text-dim);
 }
-
+.color-accent {
+  color: var(--color-accent);
+}
+.color-steel {
+  color: var(--color-steel);
+}
+.color-green {
+  color: var(--color-green);
+}
 /* ═══════════════════════════════════════════════════════════════════════════
     SHARED COMPONENT UTILITIES
     Patterns repeated verbatim across 4+ unrelated files.

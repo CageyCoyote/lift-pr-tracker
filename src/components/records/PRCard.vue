@@ -6,6 +6,7 @@ import { useExercisesStore } from '../../stores/exercises'
 import PRForm from './PRForm.vue'
 import PREditForm from './PREditForm.vue'
 import PRNewForm from './PRNewForm.vue'
+import PRShareSheet from './PRShareSheet.vue'
 
 const props = defineProps({
   personId: { type: String, required: true },
@@ -25,6 +26,10 @@ const logExercise = ref(null)
 const editFormOpen = ref(false)
 const editEntry = ref(null)
 const editExercise = ref(null)
+
+// Share sheet state
+const shareSheetOpen = ref(false)
+const shareEntry = ref(null)
 
 function history() {
   return recordsStore.historyFor(props.personId, props.exerciseId)
@@ -52,11 +57,74 @@ function handleSaved(payload) {
 function handleUpdated(payload) {
   recordsStore.updateEntry(payload.id, payload)
 }
+
+function openShare(entry) {
+  shareEntry.value = entry
+  shareSheetOpen.value = true
+}
+
+// ── Long-press the badge to share the PR shown on it ───────────────────────
+const LONG_PRESS_MS = 550
+const MOVE_CANCEL_PX = 10
+const badgePressing = ref(false)
+
+let longPressTimer = null
+let longPressFired = false
+let pressStart = null
+
+function startLongPress(e) {
+  if (!props.personId) return
+  longPressFired = false
+  badgePressing.value = true
+  pressStart = { x: e.clientX, y: e.clientY }
+
+  clearTimeout(longPressTimer)
+  longPressTimer = setTimeout(() => {
+    longPressFired = true
+    badgePressing.value = false
+    if (navigator.vibrate) navigator.vibrate(15)
+    openShare(props.best)
+  }, LONG_PRESS_MS)
+}
+
+function moveDuringPress(e) {
+  if (!pressStart) return
+  const dx = e.clientX - pressStart.x
+  const dy = e.clientY - pressStart.y
+  if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) cancelLongPress()
+}
+
+function cancelLongPress() {
+  clearTimeout(longPressTimer)
+  badgePressing.value = false
+  pressStart = null
+}
+
+// The card-top button still needs its normal expand/collapse click — but
+// not immediately after a long-press fired, or the share sheet would open
+// and the card would expand underneath it in the same gesture.
+function handleCardTopClick() {
+  if (longPressFired) {
+    longPressFired = false
+    return
+  }
+  expanded.value = !expanded.value
+}
 </script>
 
 <template>
   <div class="card">
-    <button class="card-top" @click="expanded = !expanded">
+    <button
+      class="card-top"
+      :class="{ pressing: badgePressing }"
+      @click="handleCardTopClick"
+      @pointerdown="startLongPress"
+      @pointermove="moveDuringPress"
+      @pointerup="cancelLongPress"
+      @pointerleave="cancelLongPress"
+      @pointercancel="cancelLongPress"
+      @contextmenu.prevent
+    >
       <PlateBadge v-if="best.unit === 'bodyweight'" :weight="best.reps" unit="reps" />
       <PlateBadge v-else :weight="best.weight" :unit="best.unit" />
       <div class="card-info">
@@ -87,7 +155,16 @@ function handleUpdated(payload) {
           <template v-if="h.unit === 'bodyweight'">{{ h.reps }} reps (bodyweight) — {{ h.date }}</template>
           <template v-else>{{ h.weight }}{{ h.unit }} × {{ h.reps }} — {{ h.date }}</template>
         </span>
+
+        <button class="action-btn share-btn" @click="openShare(h)" aria-label="Share this PR">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
+        </button>
         <button class="action-btn remove-btn" @click="remove(h.id)" aria-label="Delete entry">×</button>
+
       </div>
     </div>
 
@@ -97,6 +174,9 @@ function handleUpdated(payload) {
     <!-- Edit the Most Recent PR -->
     <PREditForm v-model="editFormOpen" :initial-exercise="editExercise" :edit-entry="editEntry"
       @updated="handleUpdated" />
+
+    <!-- Share this PR -->
+    <PRShareSheet v-model="shareSheetOpen" :entry="shareEntry" :person-id="props.personId" />
   </div>
 </template>
 
@@ -118,6 +198,14 @@ function handleUpdated(payload) {
   border: none;
   color: var(--color-text);
   text-align: left;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.card-top.pressing {
+  background: var(--color-surface-2);
 }
 
 .card-info {
@@ -186,6 +274,15 @@ function handleUpdated(payload) {
 .remove-btn {
   color: var(--color-danger);
   font-size: 18px;
+}
+
+.share-btn {
+  color: var(--color-steel);
+}
+
+.share-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-2);
 }
 
 .log-row {

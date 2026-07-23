@@ -10,6 +10,7 @@ import { useFavoritesStore } from '../../stores/favourites'
 import WorkoutQRSheet from '../../components/workouts/WorkoutQRSheet.vue'
 import { useCurrentUser } from "../../composables/useCurrentUser.js";
 import { usePrCelebration } from '../../composables/usePrCelebration'
+import { useUndoToast } from '../../composables/useUndoToast'
 
 const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
 
@@ -21,6 +22,7 @@ const recordsStore = useRecordsStore()
 const favouritesStore = useFavoritesStore()
 const { userId } = useCurrentUser()
 const { celebrateNewPr } = usePrCelebration()
+const { showUndoToast } = useUndoToast()
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
 
@@ -70,10 +72,11 @@ function openQR() {
 
 function deleteWorkout() {
   menuOpen.value = false
-  if (confirm(`Delete "${workout.value.title}"? This can't be undone.`)) {
-    workoutsStore.removeWorkout(workout.value.id)
-    router.push('/plan')
-  }
+  const removed = workout.value
+  const removedIndex = workoutsStore.workouts.findIndex((w) => w.id === removed.id)
+  workoutsStore.removeWorkout(removed.id)
+  router.push('/plan')
+  showUndoToast(`Deleted "${removed.title}"`, () => workoutsStore.restoreWorkout(removed, removedIndex))
 }
 </script>
 

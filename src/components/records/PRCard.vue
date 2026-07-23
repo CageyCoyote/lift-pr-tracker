@@ -8,6 +8,7 @@ import PREditForm from './PREditForm.vue'
 import PRNewForm from './PRNewForm.vue'
 import PRShareSheet from './PRShareSheet.vue'
 import { usePrCelebration } from '../../composables/usePrCelebration'
+import { useUndoToast } from '../../composables/useUndoToast'
 
 const props = defineProps({
   personId: { type: String, required: true },
@@ -18,6 +19,7 @@ const props = defineProps({
 const recordsStore = useRecordsStore()
 const exercisesStore = useExercisesStore()
 const { celebrateNewPr } = usePrCelebration()
+const { showUndoToast } = useUndoToast()
 const expanded = ref(false)
 
 // New PR form state
@@ -38,7 +40,14 @@ function history() {
 }
 
 function remove(id) {
+  const entry = recordsStore.entries.find((e) => e.id === id)
   recordsStore.removeEntry(id)
+  if (!entry) return
+
+  const summary = entry.unit === 'bodyweight'
+    ? `${entry.reps} reps (bodyweight)`
+    : `${entry.weight}${entry.unit} × ${entry.reps}`
+  showUndoToast(`Deleted ${entry.exerciseName} — ${summary}`, () => recordsStore.restoreEntry(entry))
 }
 
 function openLog() {

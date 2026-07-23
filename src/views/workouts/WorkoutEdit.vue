@@ -8,6 +8,7 @@ import ExercisePicker from '../../components/exercises/ExercisePicker.vue'
 import PRForm from '../../components/records/PRForm.vue'
 import { useCurrentUser } from "../../composables/useCurrentUser.js";
 import { usePrCelebration } from '../../composables/usePrCelebration'
+import { useUndoToast } from '../../composables/useUndoToast'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,6 +17,7 @@ const exercisesStore = useExercisesStore()
 const recordsStore = useRecordsStore()
 const { userId } = useCurrentUser()
 const { celebrateNewPr } = usePrCelebration()
+const { showUndoToast } = useUndoToast()
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
 
@@ -38,6 +40,12 @@ function bestNote(exerciseId) {
 function openLog(item) {
   logExercise.value = exercisesStore.getById(item.exerciseId)
   formOpen.value = true
+}
+
+function removeItemWithUndo(item) {
+  const idx = workout.value.items.findIndex((i) => i.id === item.id)
+  workoutsStore.removeItem(workout.value.id, item.id)
+  showUndoToast(`Removed ${item.exerciseName}`, () => workoutsStore.restoreItem(workout.value.id, item, idx))
 }
 
 function handleSaved(payload) {
@@ -100,7 +108,7 @@ function saveRename() {
             aria-label="Move up">↑</button>
           <button class="icon-btn" :disabled="idx === workout.items.length - 1"
             @click="workoutsStore.moveDown(workout.id, item.id)" aria-label="Move down">↓</button>
-          <button class="icon-btn danger" @click="workoutsStore.removeItem(workout.id, item.id)"
+          <button class="icon-btn danger" @click="removeItemWithUndo(item)"
             aria-label="Remove">×</button>
         </div>
       </li>

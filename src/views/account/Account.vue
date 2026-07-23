@@ -5,6 +5,7 @@ import ThemePicker from '../../components/account/ThemePicker.vue'
 import IconColorPicker from '../../components/account/IconColorPicker.vue'
 import InstallSection from '../../components/account/InstallSection.vue'
 import DataExport from '../../components/account/DataExport.vue'
+import BackupRestore from '../../components/account/BackupRestore.vue'
 
 const router = useRouter()
 </script>
@@ -22,6 +23,7 @@ const router = useRouter()
     <IconColorPicker />
     <InstallSection />
     <DataExport />
+    <BackupRestore />
   </div>
 </template>
 

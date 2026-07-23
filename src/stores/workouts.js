@@ -59,6 +59,18 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     workouts.value = workouts.value.filter((w) => w.id !== id)
   }
 
+  // Puts a previously-removed workout back at its original position —
+  // used by the undo toast. Falls back to the end of the list if the
+  // original index is no longer valid (e.g. other workouts were removed
+  // in the meantime).
+  function restoreWorkout(workout, atIndex) {
+    if (typeof atIndex === 'number' && atIndex >= 0 && atIndex <= workouts.value.length) {
+      workouts.value.splice(atIndex, 0, workout)
+    } else {
+      workouts.value.push(workout)
+    }
+  }
+
   function renameWorkout(id, title) {
     const w = getWorkout(id)
     if (w && title?.trim()) w.title = title.trim()
@@ -74,6 +86,19 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     const w = getWorkout(workoutId)
     if (!w) return
     w.items = w.items.filter((i) => i.id !== itemId)
+  }
+
+  // Puts a previously-removed item back at its original position within
+  // the workout — used by the undo toast. Order matters here (it's a
+  // sequence of exercises), so unlike restoreEntry this needs an index.
+  function restoreItem(workoutId, item, atIndex) {
+    const w = getWorkout(workoutId)
+    if (!w) return
+    if (typeof atIndex === 'number' && atIndex >= 0 && atIndex <= w.items.length) {
+      w.items.splice(atIndex, 0, item)
+    } else {
+      w.items.push(item)
+    }
   }
 
   function moveUp(workoutId, itemId) {
@@ -147,9 +172,11 @@ export const useWorkoutsStore = defineStore('workouts', () => {
     createWorkout,
     importWorkout,
     removeWorkout,
+    restoreWorkout,
     renameWorkout,
     addExercise,
     removeItem,
+    restoreItem,
     moveUp,
     moveDown,
     targetedMuscles

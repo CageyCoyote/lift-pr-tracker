@@ -49,6 +49,14 @@ export const useRecordsStore = defineStore('records', () => {
     entries.value = entries.value.filter((e) => e.id !== id)
   }
 
+  // Puts a previously-removed entry back exactly as it was (same id, date,
+  // etc.) — used by the undo toast. Deliberately NOT addEntry: this must
+  // not regenerate an id or re-trigger new-PR detection for something the
+  // person is simply putting back, not logging.
+  function restoreEntry(entry) {
+    entries.value.push(entry)
+  }
+
   // Used when a person is deleted — strips every PR entry that belonged to them.
   function removeEntriesForPerson(personId) {
     entries.value = entries.value.filter((e) => e.personId !== personId)
@@ -109,5 +117,5 @@ export const useRecordsStore = defineStore('records', () => {
       .sort((a, b) => a.best.exerciseName.localeCompare(b.best.exerciseName))
   }
 
-  return { entries, addEntry, removeEntry, removeEntriesForPerson, reassignImportedEntries, updateEntry, historyFor, bestFor, bestsForPerson }
+  return { entries, addEntry, removeEntry, restoreEntry, removeEntriesForPerson, reassignImportedEntries, updateEntry, historyFor, bestFor, bestsForPerson }
 })

@@ -8,7 +8,7 @@ const DB_VERSION = 1
 const STORE_NAME = 'kv'
 
 // Keys that live in this app's storage
-const ALL_KEYS = ['people', 'activePersonId', 'entries', 'workouts', 'settings.iconColor', 'settings.theme', 'settings.personIconColors', 'favourites', 'contacts']
+export const ALL_KEYS = ['people', 'activePersonId', 'entries', 'workouts', 'settings.iconColor', 'settings.theme', 'settings.personIconColors', 'favourites', 'contacts']
 
 // In-memory cache — populated during initDB(), kept in sync on every save()
 const cache = {}
@@ -133,4 +133,42 @@ export function save(key, value) {
       // storage full — data stays in memory via cache
     }
   }
+}
+
+// ── Full-app backup/restore ────────────────────────────────────────────────
+// Used by the Account page's Backup & Restore section. Operates on whatever
+// keys are actually present (i.e. have been saved at least once) — a key a
+// person never touched (e.g. no favourites yet) is simply omitted rather
+// than forced into the backup with a guessed default.
+
+// Returns a plain { [key]: value } snapshot of every known storage key that
+// currently has data. Safe to JSON.stringify directly.
+export function exportAllData() {
+  const data = {}
+  for (const key of ALL_KEYS) {
+    if (key in cache) {
+      data[key] = cache[key]
+    }
+  }
+  return data
+}
+
+// Writes every key from a previously-exported snapshot back into storage.
+// Unknown keys (e.g. from a newer app version) are ignored rather than
+// blindly trusted. Does NOT touch keys missing from the snapshot — callers
+// that want a full reset should clear storage themselves first.
+// Returns the list of keys actually written.
+export function restoreAllData(data) {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Backup file is missing its data.')
+  }
+
+  const written = []
+  for (const key of ALL_KEYS) {
+    if (key in data) {
+      save(key, data[key])
+      written.push(key)
+    }
+  }
+  return written
 }

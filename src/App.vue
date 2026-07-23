@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import AppNav from './components/common/AppNav.vue'
 import InstallBanner from './components/common/InstallBanner.vue'
 import PrCelebration from './components/common/PrCelebration.vue'
+import UndoToast from './components/common/UndoToast.vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from './stores/settings'
 import { useCurrentUser } from "./composables/useCurrentUser.js";
@@ -32,6 +33,7 @@ onMounted(() => settingsStore.applyTheme())
   <AppNav />
   <InstallBanner />
   <PrCelebration />
+  <UndoToast />
 </template>
 
 <style scoped>

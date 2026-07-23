@@ -6,9 +6,11 @@ import PRCard from '../../components/records/PRCard.vue'
 import PRSearchForm from '../../components/records/PRSearchForm.vue'
 import PRShareSheet from '../../components/records/PRShareSheet.vue'
 import { useCurrentUser } from "../../composables/useCurrentUser.js";
+import { usePrCelebration } from '../../composables/usePrCelebration'
 
 const recordsStore = useRecordsStore()
 const { userId } = useCurrentUser()
+const { celebrateNewPr } = usePrCelebration()
 const formOpen = ref(false)
 const importSheetOpen = ref(false)
 
@@ -44,7 +46,8 @@ const sortedBests = computed(() => {
 })
 
 function handleSaved(payload) {
-  recordsStore.addEntry({ personId: userId.value, ...payload })
+  const { entry, isNewBest } = recordsStore.addEntry({ personId: userId.value, ...payload })
+  if (isNewBest) celebrateNewPr(entry)
 }
 </script>
 

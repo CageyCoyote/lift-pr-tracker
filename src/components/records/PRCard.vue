@@ -7,6 +7,7 @@ import PRForm from './PRForm.vue'
 import PREditForm from './PREditForm.vue'
 import PRNewForm from './PRNewForm.vue'
 import PRShareSheet from './PRShareSheet.vue'
+import { usePrCelebration } from '../../composables/usePrCelebration'
 
 const props = defineProps({
   personId: { type: String, required: true },
@@ -16,6 +17,7 @@ const props = defineProps({
 
 const recordsStore = useRecordsStore()
 const exercisesStore = useExercisesStore()
+const { celebrateNewPr } = usePrCelebration()
 const expanded = ref(false)
 
 // New PR form state
@@ -51,7 +53,8 @@ function openEdit(entry) {
 }
 
 function handleSaved(payload) {
-  recordsStore.addEntry({ personId: props.personId, ...payload })
+  const { entry, isNewBest } = recordsStore.addEntry({ personId: props.personId, ...payload })
+  if (isNewBest) celebrateNewPr(entry)
 }
 
 function handleUpdated(payload) {

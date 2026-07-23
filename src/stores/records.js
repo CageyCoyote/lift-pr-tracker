@@ -31,8 +31,18 @@ export const useRecordsStore = defineStore('records', () => {
       date: date || new Date().toISOString().slice(0, 10),
       ...(importedFrom ? { importedFrom } : {}),
     }
+
+    // Snapshot the previous best BEFORE pushing, so we can tell whether
+    // this entry just became the new best for this person/exercise.
+    const previousBest = bestFor(personId, exerciseId)
     entries.value.push(entry)
-    return entry
+
+    const isNewBest =
+      !previousBest ||
+      metric(entry) > metric(previousBest) ||
+      (metric(entry) === metric(previousBest) && entry.reps > previousBest.reps)
+
+    return { entry, isNewBest, previousBest }
   }
 
   function removeEntry(id) {

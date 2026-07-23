@@ -8,6 +8,7 @@ import PRNewForm from '../../components/records/PRNewForm.vue'
 import FavoriteStar from '../../components/common/FavoriteStar.vue'
 import { useFavoritesStore } from '../../stores/favourites'
 import { useCurrentUser } from "../../composables/useCurrentUser.js"
+import { usePrCelebration } from '../../composables/usePrCelebration'
 
 // Base URL for exercise images — update this to wherever your images are hosted
 // const IMAGE_BASE = '/images/exercises/'
@@ -20,6 +21,7 @@ const workoutsStore = useWorkoutsStore()
 const favouritesStore = useFavoritesStore()
 const recordsStore = useRecordsStore()
 const { userId } = useCurrentUser()
+const { celebrateNewPr } = usePrCelebration()
 
 const exercise = computed(() => exercisesStore.getById(route.params.id))
 
@@ -53,7 +55,8 @@ function addToWorkout(workout) {
 const prFormOpen = ref(false)
 
 function handleSaved(payload) {
-  recordsStore.addEntry({ personId: userId, ...payload })
+  const { entry, isNewBest } = recordsStore.addEntry({ personId: userId.value, ...payload })
+  if (isNewBest) celebrateNewPr(entry)
 }
 </script>
 

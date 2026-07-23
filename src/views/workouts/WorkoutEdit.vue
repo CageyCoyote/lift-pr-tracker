@@ -7,6 +7,7 @@ import { useRecordsStore } from '../../stores/records'
 import ExercisePicker from '../../components/exercises/ExercisePicker.vue'
 import PRForm from '../../components/records/PRForm.vue'
 import { useCurrentUser } from "../../composables/useCurrentUser.js";
+import { usePrCelebration } from '../../composables/usePrCelebration'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +15,7 @@ const workoutsStore = useWorkoutsStore()
 const exercisesStore = useExercisesStore()
 const recordsStore = useRecordsStore()
 const { userId } = useCurrentUser()
+const { celebrateNewPr } = usePrCelebration()
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
 
@@ -29,8 +31,8 @@ function addExercise(ex) {
 }
 
 function bestNote(exerciseId) {
-  if (!userId) return null
-  return recordsStore.bestFor(userId, exerciseId)
+  if (!userId.value) return null
+  return recordsStore.bestFor(userId.value, exerciseId)
 }
 
 function openLog(item) {
@@ -39,7 +41,8 @@ function openLog(item) {
 }
 
 function handleSaved(payload) {
-  recordsStore.addEntry({ personId: userId, ...payload })
+  const { entry, isNewBest } = recordsStore.addEntry({ personId: userId.value, ...payload })
+  if (isNewBest) celebrateNewPr(entry)
 }
 
 function startRename() {

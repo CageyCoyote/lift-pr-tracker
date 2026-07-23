@@ -40,6 +40,13 @@ export const useSettingsStore = defineStore('settings', () => {
     personIconColors.value[personId] = hex
   }
 
+  // Used when a person is deleted — drops their entry from the map entirely
+  // rather than leaving an orphaned personId -> hex pairing behind.
+  function clearIconColor(personId) {
+    if (!personId) return
+    delete personIconColors.value[personId]
+  }
+
   // Returns the colour to actually render — applies theme overrides for illegible combos
   function effectiveIconColor(personId) {
     const color = getIconColor(personId)
@@ -60,6 +67,7 @@ export const useSettingsStore = defineStore('settings', () => {
     theme,
     getIconColor,
     setIconColor,
+    clearIconColor,
     effectiveIconColor,
     setTheme,
     applyTheme,

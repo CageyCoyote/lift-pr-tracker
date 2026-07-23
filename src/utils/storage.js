@@ -8,7 +8,7 @@ const DB_VERSION = 1
 const STORE_NAME = 'kv'
 
 // Keys that live in this app's storage
-const ALL_KEYS = ['people', 'activePersonId', 'entries', 'workouts', 'settings.iconColor', 'settings.theme', 'settings.personIconColors', 'favourites']
+const ALL_KEYS = ['people', 'activePersonId', 'entries', 'workouts', 'settings.iconColor', 'settings.theme', 'settings.personIconColors', 'favourites', 'contacts']
 
 // In-memory cache — populated during initDB(), kept in sync on every save()
 const cache = {}

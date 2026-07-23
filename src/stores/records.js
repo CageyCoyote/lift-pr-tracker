@@ -1,23 +1,35 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { load, save } from '../utils/storage'
+import { useExercisesStore } from "./exercises";
 
-// An entry is one logged lift: { id, personId, exerciseId, exerciseName, weight, reps, unit, date }
+// An entry is one logged lift:
+// { id, personId, exerciseId, exerciseName, weight, reps, unit, date, importedFrom? }
+// `importedFrom` — when set, holds the sender's shareId. Only present on
+// entries created via useImportPR, so a bad mapping/import can be traced
+// and repaired later (see reassignImportedEntries below).
 export const useRecordsStore = defineStore('records', () => {
   const entries = ref(load('entries', []))
 
   watch(entries, (v) => save('entries', v), { deep: true })
 
-  function addEntry({ personId, exerciseId, exerciseName, weight, reps, unit, date }) {
+  function addEntry({ personId, exerciseId, exerciseName, weight, reps, unit, date, importedFrom }) {
+    let exName = exerciseName
+    if(!exerciseName){
+      const exerciseStore = useExercisesStore()
+      const ex = exerciseStore.getById(exerciseId)
+      exName = ex.name
+    }
     const entry = {
       id: crypto.randomUUID(),
       personId,
       exerciseId,
-      exerciseName,
+      exerciseName: exName,
       weight: Number(weight),
       reps: Number(reps) || 1,
       unit: unit || 'lb',
-      date: date || new Date().toISOString().slice(0, 10)
+      date: date || new Date().toISOString().slice(0, 10),
+      ...(importedFrom ? { importedFrom } : {}),
     }
     entries.value.push(entry)
     return entry
@@ -25,6 +37,26 @@ export const useRecordsStore = defineStore('records', () => {
 
   function removeEntry(id) {
     entries.value = entries.value.filter((e) => e.id !== id)
+  }
+
+  // Used when a person is deleted — strips every PR entry that belonged to them.
+  function removeEntriesForPerson(personId) {
+    entries.value = entries.value.filter((e) => e.personId !== personId)
+  }
+
+  // Repair path for a mis-imported PR: moves every entry that (a) came from
+  // this specific shareId and (b) is currently sitting on the wrong local
+  // person, over onto the correct person. Scoped by shareId so it only
+  // touches entries from that one sender, not everything toPersonId owns.
+  function reassignImportedEntries(shareId, fromPersonId, toPersonId) {
+    let moved = 0
+    for (const e of entries.value) {
+      if (e.importedFrom === shareId && e.personId === fromPersonId) {
+        e.personId = toPersonId
+        moved++
+      }
+    }
+    return moved
   }
 
   function updateEntry(id, { weight, reps, unit, date }) {
@@ -67,5 +99,5 @@ export const useRecordsStore = defineStore('records', () => {
       .sort((a, b) => a.best.exerciseName.localeCompare(b.best.exerciseName))
   }
 
-  return { entries, addEntry, removeEntry, updateEntry, historyFor, bestFor, bestsForPerson }
+  return { entries, addEntry, removeEntry, removeEntriesForPerson, reassignImportedEntries, updateEntry, historyFor, bestFor, bestsForPerson }
 })

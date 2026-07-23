@@ -4,11 +4,13 @@ import { useRecordsStore } from '../../stores/records'
 import PersonSelector from '../../components/common/PersonSelector.vue'
 import PRCard from '../../components/records/PRCard.vue'
 import PRSearchForm from '../../components/records/PRSearchForm.vue'
+import PRShareSheet from '../../components/records/PRShareSheet.vue'
 import { useCurrentUser } from "../../composables/useCurrentUser.js";
 
 const recordsStore = useRecordsStore()
 const { userId } = useCurrentUser()
 const formOpen = ref(false)
+const importSheetOpen = ref(false)
 
 const sortBy = ref('date')
 
@@ -50,6 +52,7 @@ function handleSaved(payload) {
   <div class="page">
     <header class="page-header">
       <h1>Personal Records</h1>
+      <button class="import-btn" @click="importSheetOpen = true">Import PR</button>
     </header>
 
     <PersonSelector />
@@ -81,17 +84,40 @@ function handleSaved(payload) {
 
     <!-- search the library for a new PR -->
     <PRSearchForm v-model="formOpen" :person-id="userId" @saved="handleSaved" />
+
+    <!-- import a PR shared from another device -->
+    <PRShareSheet v-model="importSheetOpen" />
   </div>
 </template>
 
 <style scoped>
 .page-header {
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .page-header h1 {
   font-size: 28px;
   margin-top: 2px;
+}
+
+.import-btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px 12px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  border-radius: var(--radius);
+  white-space: nowrap;
+}
+
+.import-btn:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent);
 }
 
 .list-controls {

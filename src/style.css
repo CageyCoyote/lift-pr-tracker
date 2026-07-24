@@ -129,11 +129,31 @@ a:focus-visible {
   background: var(--color-surface-2);
   color: var(--color-text);
   border: 1px solid var(--color-border);
+  touch-action: manipulation;
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn:active {
+  transform: scale(0.95);
+  filter: brightness(0.94);
 }
 
 .btn-accent {
   background: var(--color-accent);
   color: #1a1500;
+}
+
+.btn-accent:active {
+  animation: btn-pulse 0.28s ease-out;
+}
+
+@keyframes btn-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-accent) 0%, transparent);
+  }
 }
 
 .btn-danger {

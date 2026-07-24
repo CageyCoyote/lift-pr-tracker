@@ -22,7 +22,7 @@ const exercisesStore = useExercisesStore()
 const { celebrateNewPr } = usePrCelebration()
 const { showUndoToast } = useUndoToast()
 const expanded = ref(false)
-const viewMode = ref('log') // 'log' | 'chart'
+const viewMode = ref('chart') // 'log' | 'chart'
 
 // New PR form state
 const formOpen = ref(false)

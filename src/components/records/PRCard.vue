@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch, nextTick } from 'vue'
 import PlateBadge from '../common/PlateBadge.vue'
 import { useRecordsStore } from '../../stores/records'
 import { useExercisesStore } from '../../stores/exercises'
@@ -139,6 +139,29 @@ const swipeState = reactive({})
 
 let swipeStart = null
 let activeSwipeId = null
+
+// ── Auto "peek" the top entry when Log view opens, to hint the swipe ───────
+const PEEK_PX = 34
+const PEEK_HOLD_MS = 450
+
+function peekFirstRow() {
+  const first = history()[0]
+  if (!first) return
+  const id = first.id
+  swipeState[id] = { dx: 0, dragging: false }
+  requestAnimationFrame(() => {
+    // Only peek if the user hasn't started dragging this row already
+    if (activeSwipeId === id) return
+    swipeState[id].dx = PEEK_PX
+    setTimeout(() => {
+      if (swipeState[id] && activeSwipeId !== id) swipeState[id].dx = 0
+    }, PEEK_HOLD_MS)
+  })
+}
+
+watch(viewMode, (mode) => {
+  if (mode === 'log') nextTick(peekFirstRow)
+})
 
 function swipeStyle(id) {
   const s = swipeState[id]
@@ -280,9 +303,6 @@ function resetSwipe(id = activeSwipeId) {
               <template v-if="h.unit === 'bodyweight'">{{ h.reps }} reps (bodyweight) — {{ h.date }}</template>
               <template v-else>
                 {{ h.weight }}{{ h.unit }} × {{ h.reps }} — {{ h.date }}
-                <span v-if="estimateOneRepMax(h.weight, h.reps, h.unit)" class="est-1rm">
-                  ~{{ estimateOneRepMax(h.weight, h.reps, h.unit) }}{{ h.unit }} 1RM
-                </span>
               </template>
             </span>
 

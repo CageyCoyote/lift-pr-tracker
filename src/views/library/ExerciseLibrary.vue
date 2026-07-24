@@ -19,7 +19,7 @@ const muscle = computed(() => route.query.muscle || '')
 const category = computed(() => route.query.category || '')
 
 const searchExpanded = computed(() =>
-  !!(query.value || equipment.value || muscle.value || category.value || favOnly.value)
+  !!(query.value || equipment.value || muscle.value || category.value)
 )
 
 const exercises = computed(() => {
@@ -32,6 +32,10 @@ const exercises = computed(() => {
   if (favOnly.value) return results.filter(e => favouritesStore.isFavorite(e.id))
   return results
 })
+
+const hasSearchFilters = computed(() =>
+  !!(query.value || equipment.value || muscle.value || category.value)
+)
 
 const hasFilters = computed(() =>
   !!(query.value || equipment.value || muscle.value || category.value || favOnly.value)
@@ -51,7 +55,7 @@ function toggleFavOnly() {
     const { fav, ...rest } = route.query
     router.replace({ query: rest })
   } else {
-    router.replace({ query: { ...route.query, fav: '1', _open: '1' } })
+    router.replace({ query: { ...route.query, fav: '1' } })
   }
 }
 
@@ -84,13 +88,15 @@ function toggleSearch() {
         <div>
           <span v-if="panelOpen" class="eyebrow">Search</span>
           <span v-else class="eyebrow">Browse</span>
-          <h1>Exercise Library</h1>
+          <h1>
+            Exercise Library
+            <button class="fav-toggle" :class="{ active: favOnly }" @click="toggleFavOnly"
+              aria-label="Show favourites only">
+              <FavoriteStar :active="favOnly" :size="16" />
+            </button>
+          </h1>
         </div>
-        <button class="fav-toggle" :class="{ active: favOnly }" @click="toggleFavOnly"
-          aria-label="Show favourites only">
-          <FavoriteStar :active="favOnly" :size="16" />
-        </button>
-        <button class="search-toggle" :class="{ active: panelOpen || hasFilters }" @click="toggleSearch"
+        <button class="search-toggle" :class="{ active: panelOpen || hasSearchFilters }" @click="toggleSearch"
           aria-label="Toggle search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round">
@@ -217,7 +223,7 @@ function toggleSearch() {
   border-radius: var(--radius);
   width: 38px;
   height: 38px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;

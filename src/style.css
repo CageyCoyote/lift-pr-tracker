@@ -143,7 +143,7 @@ a:focus-visible {
   color: #1a1500;
 }
 
-.btn-accent:active {
+.btn-accent.btn-pulse {
   animation: btn-pulse 0.28s ease-out;
 }
 

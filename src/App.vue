@@ -12,7 +12,22 @@ const router = useRouter()
 const settingsStore = useSettingsStore()
 const {userId} = useCurrentUser()
 
-onMounted(() => settingsStore.applyTheme())
+onMounted(() => {
+  settingsStore.applyTheme()
+
+  // Trigger the .btn-accent pulse via JS instead of :active, since :active
+  // is unreliable on mobile taps (often skipped, or cut short when the
+  // finger lifts before the animation finishes).
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-accent')
+    if (!btn) return
+    btn.classList.remove('btn-pulse')
+    // Force reflow so the animation restarts if clicked again quickly
+    void btn.offsetWidth
+    btn.classList.add('btn-pulse')
+    btn.addEventListener('animationend', () => btn.classList.remove('btn-pulse'), { once: true })
+  })
+})
 </script>
 
 <template>

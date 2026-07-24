@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import PlateBadge from '../common/PlateBadge.vue'
 import { useRecordsStore } from '../../stores/records'
 import { useExercisesStore } from '../../stores/exercises'
@@ -10,6 +10,7 @@ import PRShareSheet from './PRShareSheet.vue'
 import PRChart from './PRChart.vue'
 import { usePrCelebration } from '../../composables/usePrCelebration'
 import { useUndoToast } from '../../composables/useUndoToast'
+import { estimateOneRepMax } from '../../utils/oneRepMax'
 
 const props = defineProps({
   personId: { type: String, required: true },
@@ -23,6 +24,10 @@ const { celebrateNewPr } = usePrCelebration()
 const { showUndoToast } = useUndoToast()
 const expanded = ref(false)
 const viewMode = ref('chart') // 'log' | 'chart'
+
+const bestOneRm = computed(() =>
+  estimateOneRepMax(props.best.weight, props.best.reps, props.best.unit)
+)
 
 // New PR form state
 const formOpen = ref(false)
@@ -205,16 +210,19 @@ function resetSwipe(id = activeSwipeId) {
       @pointercancel="cancelLongPress"
       @contextmenu.prevent
     >
-      <PlateBadge v-if="best.unit === 'bodyweight'" :weight="best.reps" unit="reps" />
-      <PlateBadge v-else :weight="best.weight" :unit="best.unit" />
-      <div class="card-info">
-        <span class="card-name">{{ best.exerciseName }}</span>
-        <span class="card-meta">
-          <template v-if="best.unit === 'bodyweight'">Bodyweight · {{ best.date }}</template>
-          <template v-else>{{ best.reps }} rep{{ best.reps > 1 ? 's' : '' }} · {{ best.date }}</template>
-        </span>
+      <div class="card-top-row">
+        <PlateBadge v-if="best.unit === 'bodyweight'" :weight="best.reps" unit="reps" />
+        <PlateBadge v-else :weight="best.weight" :unit="best.unit" />
+        <div class="card-info">
+          <span class="card-name">{{ best.exerciseName }}</span>
+          <span class="card-meta">
+            <template v-if="best.unit === 'bodyweight'">Bodyweight · {{ best.date }}</template>
+            <template v-else>{{ best.reps }} rep{{ best.reps > 1 ? 's' : '' }} · {{ best.date }}</template>
+          </span>
+        </div>
+        <span class="chevron" :class="{ open: expanded }">⌄</span>
       </div>
-      <span class="chevron" :class="{ open: expanded }">⌄</span>
+      <div v-if="bestOneRm" class="card-1rm-line">Estimated Max: {{ bestOneRm }}{{ best.unit }}</div>
     </button>
 
     <div v-if="expanded" class="history">
@@ -270,7 +278,12 @@ function resetSwipe(id = activeSwipeId) {
           >
             <span class="history-text">
               <template v-if="h.unit === 'bodyweight'">{{ h.reps }} reps (bodyweight) — {{ h.date }}</template>
-              <template v-else>{{ h.weight }}{{ h.unit }} × {{ h.reps }} — {{ h.date }}</template>
+              <template v-else>
+                {{ h.weight }}{{ h.unit }} × {{ h.reps }} — {{ h.date }}
+                <span v-if="estimateOneRepMax(h.weight, h.reps, h.unit)" class="est-1rm">
+                  ~{{ estimateOneRepMax(h.weight, h.reps, h.unit) }}{{ h.unit }} 1RM
+                </span>
+              </template>
             </span>
 
             <button class="action-btn share-btn" @click="openShare(h)" aria-label="Share this PR">
@@ -309,8 +322,7 @@ function resetSwipe(id = activeSwipeId) {
 .card-top {
   width: 100%;
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
   padding: 12px;
   background: none;
   border: none;
@@ -322,8 +334,25 @@ function resetSwipe(id = activeSwipeId) {
   transition: background 0.15s ease;
 }
 
+.card-top-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
 .card-top.pressing {
   background: var(--color-surface-2);
+}
+
+.card-1rm-line {
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-dim);
 }
 
 .card-info {
@@ -387,6 +416,18 @@ function resetSwipe(id = activeSwipeId) {
   background: var(--color-surface);
   touch-action: pan-y;
   will-change: transform;
+}
+
+.history-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.est-1rm {
+  color: var(--color-text-dim);
+  opacity: 0.7;
+  margin-left: 4px;
 }
 
 .action-btn {

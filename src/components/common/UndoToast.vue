@@ -57,7 +57,7 @@ function handleUndo() {
   color: var(--color-accent);
   font-family: var(--font-mono);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   padding: 4px 6px;

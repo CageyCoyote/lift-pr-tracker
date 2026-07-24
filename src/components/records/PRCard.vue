@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import PlateBadge from '../common/PlateBadge.vue'
 import { useRecordsStore } from '../../stores/records'
 import { useExercisesStore } from '../../stores/exercises'
@@ -7,6 +7,7 @@ import PRForm from './PRForm.vue'
 import PREditForm from './PREditForm.vue'
 import PRNewForm from './PRNewForm.vue'
 import PRShareSheet from './PRShareSheet.vue'
+import PRChart from './PRChart.vue'
 import { usePrCelebration } from '../../composables/usePrCelebration'
 import { useUndoToast } from '../../composables/useUndoToast'
 
@@ -21,6 +22,7 @@ const exercisesStore = useExercisesStore()
 const { celebrateNewPr } = usePrCelebration()
 const { showUndoToast } = useUndoToast()
 const expanded = ref(false)
+const viewMode = ref('log') // 'log' | 'chart'
 
 // New PR form state
 const formOpen = ref(false)
@@ -122,6 +124,72 @@ function handleCardTopClick() {
   }
   expanded.value = !expanded.value
 }
+
+// ── Swipe left→right on a history row to open the edit sheet ───────────────
+const SWIPE_THRESHOLD_PX = 70
+const SWIPE_MAX_PX = 96
+
+// Keyed by entry id: { dx, dragging }
+const swipeState = reactive({})
+
+let swipeStart = null
+let activeSwipeId = null
+
+function swipeStyle(id) {
+  const s = swipeState[id]
+  const dx = s ? s.dx : 0
+  return {
+    transform: `translateX(${dx}px)`,
+    transition: s && s.dragging ? 'none' : 'transform 0.2s ease'
+  }
+}
+
+function swipeHintOpacity(id) {
+  const s = swipeState[id]
+  if (!s) return 0
+  return Math.min(s.dx / SWIPE_THRESHOLD_PX, 1)
+}
+
+function startSwipe(e, entry) {
+  swipeStart = { x: e.clientX, y: e.clientY }
+  activeSwipeId = entry.id
+  swipeState[entry.id] = { dx: 0, dragging: true }
+}
+
+function moveSwipe(e) {
+  if (!swipeStart || activeSwipeId == null) return
+  const dx = e.clientX - swipeStart.x
+  const dy = e.clientY - swipeStart.y
+
+  // A more-vertical drag is a scroll gesture, not a swipe — bail out.
+  if (Math.abs(dy) > Math.abs(dx) + 8) {
+    resetSwipe()
+    return
+  }
+
+  const state = swipeState[activeSwipeId]
+  if (!state) return
+  // Only track left-to-right movement; ignore right-to-left drags.
+  state.dx = dx > 0 ? Math.min(dx, SWIPE_MAX_PX) : 0
+}
+
+function endSwipe(entry) {
+  const state = swipeState[entry.id]
+  if (state && state.dx > SWIPE_THRESHOLD_PX) {
+    if (navigator.vibrate) navigator.vibrate(10)
+    openEdit(entry)
+  }
+  resetSwipe(entry.id)
+}
+
+function resetSwipe(id = activeSwipeId) {
+  if (id != null && swipeState[id]) {
+    swipeState[id].dragging = false
+    swipeState[id].dx = 0
+  }
+  swipeStart = null
+  activeSwipeId = null
+}
 </script>
 
 <template>
@@ -152,8 +220,26 @@ function handleCardTopClick() {
     <div v-if="expanded" class="history">
       <div class="log-row">
         <button v-if="props.personId" class="btn log-btn" @click="openLog()">+ New PR</button>
-        <button v-if="props.personId && history().length" class="action-btn edit-btn" @click="openEdit(history()[0])"
-          aria-label="Edit most recent entry">
+
+        <div class="view-toggle" role="tablist" aria-label="View mode">
+          <button
+            class="toggle-btn"
+            role="tab"
+            :aria-selected="viewMode === 'log'"
+            :class="{ active: viewMode === 'log' }"
+            @click="viewMode = 'log'"
+          >Log</button>
+          <button
+            class="toggle-btn"
+            role="tab"
+            :aria-selected="viewMode === 'chart'"
+            :class="{ active: viewMode === 'chart' }"
+            @click="viewMode = 'chart'"
+          >Chart</button>
+        </div>
+
+        <button v-if="viewMode === 'log' && props.personId && history().length" class="action-btn edit-btn"
+          @click="openEdit(history()[0])" aria-label="Edit most recent entry">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -162,22 +248,42 @@ function handleCardTopClick() {
         </button>
       </div>
 
-      <div v-for="h in history()" :key="h.id" class="history-row">
-        <span class="history-text">
-          <template v-if="h.unit === 'bodyweight'">{{ h.reps }} reps (bodyweight) — {{ h.date }}</template>
-          <template v-else>{{ h.weight }}{{ h.unit }} × {{ h.reps }} — {{ h.date }}</template>
-        </span>
+      <PRChart v-if="viewMode === 'chart'" :history="history()" />
 
-        <button class="action-btn share-btn" @click="openShare(h)" aria-label="Share this PR">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-          </svg>
-        </button>
-        <button class="action-btn remove-btn" @click="remove(h.id)" aria-label="Delete entry">×</button>
+      <template v-else>
+        <div v-for="h in history()" :key="h.id" class="history-row-wrap">
+          <div class="swipe-hint" :style="{ opacity: swipeHintOpacity(h.id) }" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </div>
+          <div
+            class="history-row"
+            :style="swipeStyle(h.id)"
+            @pointerdown="startSwipe($event, h)"
+            @pointermove="moveSwipe"
+            @pointerup="endSwipe(h)"
+            @pointerleave="resetSwipe(h.id)"
+            @pointercancel="resetSwipe(h.id)"
+          >
+            <span class="history-text">
+              <template v-if="h.unit === 'bodyweight'">{{ h.reps }} reps (bodyweight) — {{ h.date }}</template>
+              <template v-else>{{ h.weight }}{{ h.unit }} × {{ h.reps }} — {{ h.date }}</template>
+            </span>
 
-      </div>
+            <button class="action-btn share-btn" @click="openShare(h)" aria-label="Share this PR">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+            </button>
+            <button class="action-btn remove-btn" @click="remove(h.id)" aria-label="Delete entry">×</button>
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- Add a New PR for this Exercise -->
@@ -253,6 +359,23 @@ function handleCardTopClick() {
   padding: 6px 12px 10px;
 }
 
+.history-row-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.swipe-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  color: var(--color-accent);
+  background: var(--color-surface-2);
+  border-radius: 6px;
+}
+
 .history-row {
   display: flex;
   align-items: center;
@@ -261,6 +384,9 @@ function handleCardTopClick() {
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--color-text-dim);
+  background: var(--color-surface);
+  touch-action: pan-y;
+  will-change: transform;
 }
 
 .action-btn {
@@ -298,9 +424,9 @@ function handleCardTopClick() {
 }
 
 .log-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 3px 0 9px 0;
   border-bottom: 1px solid var(--color-border);
 }
@@ -311,5 +437,43 @@ function handleCardTopClick() {
   background: var(--color-steel);
   color: #fff;
   border: none;
+}
+
+.log-btn {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.view-toggle {
+  grid-column: 2;
+  justify-self: center;
+  display: flex;
+  background: var(--color-surface-2);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.edit-btn {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.toggle-btn.active {
+  background: var(--color-surface);
+  color: var(--color-accent);
 }
 </style>

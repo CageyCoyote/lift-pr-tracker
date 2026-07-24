@@ -35,7 +35,7 @@ const summary = computed(() => {
   if (!c) return ''
   return c.unit === 'bodyweight'
     ? `${c.reps} rep${c.reps > 1 ? 's' : ''} (bodyweight)`
-    : `${c.weight}${c.unit} × ${c.reps}`
+    : `${c.weight}${c.unit}`
 })
 </script>
 
@@ -65,7 +65,7 @@ const summary = computed(() => {
         <span class="toast-trophy">🏆</span>
         <div class="toast-text">
           <span class="toast-title">New PR!</span>
-          <span class="toast-sub">{{ celebration.exerciseName }} — {{ summary }}</span>
+          <span class="toast-sub">{{ summary }}</span>
         </div>
       </div>
     </div>

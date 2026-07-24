@@ -54,7 +54,7 @@ async function handleFileChosen(e) {
     const keyCount = Object.keys(parsed.data).length
     const confirmed = confirm(
       `Restore this backup from ${parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleDateString() : 'an unknown date'}?\n\n` +
-      `This will overwrite your current people, PRs, workouts, and settings on this device (${keyCount} data key${keyCount === 1 ? '' : 's'}). This can't be undone.`
+      `This will overwrite EVERYTHING, your current people, PRs, history, workouts, and settings on this device (${keyCount} item${keyCount === 1 ? '' : 's'}). This can't be undone.`
     )
     if (!confirmed) return
 

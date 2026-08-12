@@ -36,6 +36,13 @@ export default defineConfig(({ mode }) => {
           scope: base,
           icons: [
             {
+              // 144px — minimum required for Chrome installability check
+              src: 'icons/logo-144x144.png',
+              sizes: '144x144',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
               // 192px — minimum required for Chrome installability check
               src: 'icons/pwa-192x192.png',
               sizes: '192x192',

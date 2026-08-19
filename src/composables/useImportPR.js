@@ -20,17 +20,18 @@ export function useImportPR() {
     const PREFIX = 'PRK:PR:1:'
     let raw = typeof text === 'string' ? text.trim() : ''
 
-    if (raw && !raw.startsWith(PREFIX)) {
-    // try {
-      const url = new URL(raw)
-      const d = url.searchParams.get('d')
-      if (d) raw = d
-    }
-    if (!text.startsWith(PREFIX)) {
+    // if (raw && !raw.startsWith(PREFIX)) {
+    //   // try {
+    //     const url = new URL(raw)
+    //     const d = url.searchParams.get('d')
+
+    //   if (d) raw = d
+    // }
+    if (!raw.startsWith(PREFIX)) {
       return { error: 'Not a valid PR Tracker share code.' }
     }
 
-    const parts = text.slice(PREFIX.length).split(':')
+    const parts = raw.slice(PREFIX.length).split(':')
     if (parts.length < 7) {
       return { error: 'Malformed PR share code.' }
     }

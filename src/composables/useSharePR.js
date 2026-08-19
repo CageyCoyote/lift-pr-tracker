@@ -81,9 +81,22 @@ export function useSharePR() {
     }
   }
 
+  async function copyLinkToClipboard(entry, personId) {
+    const link = buildShareLink(entry, personId)
+    if (!link) return 'error'
+    try {
+      await navigator.clipboard.writeText(link)
+      return 'copied'
+    } catch (e) {
+      console.error('Clipboard failed:', e)
+      return 'failed'
+    }
+  }
+
   return {
     encodePRPayload,
     shareViaWebShare,
     copyToClipboard,
+    copyLinkToClipboard,
   }
 }

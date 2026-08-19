@@ -14,7 +14,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'imported'])
 
-const { shareViaWebShare, copyToClipboard } = useSharePR()
+const { shareViaWebShare, copyToClipboard, copyLinkToClipboard } = useSharePR()
 const {
   importDialogOpen,
   pendingPayload,
@@ -30,6 +30,7 @@ const tab = ref('share') // 'share' | 'scan'
 const qrDataUrl = ref(null)
 const qrError = ref(null)
 const copyStatus = ref(null) // null | 'copied' | 'failed'
+// const copyStatus = ref(null) // null | 'copied' | 'failed'
 
 const pasteText = ref('')
 const importError = ref(null)
@@ -284,10 +285,10 @@ function close() {
             Have them scan this to import <strong>{{ entry?.exerciseName }}</strong>
           </p>
           <button class="btn copy-btn" @click="doCopyLink">
-            {{ copyStatus === 'copied' ? 'Copied!' : copyStatus === 'failed' ? 'Copy failed' : 'Copy code instead' }}
+            {{ copyStatus === 'copied' ? 'Copied!' : copyStatus === 'failed' ? 'Copy failed' : 'Copy Link' }}
           </button>
           <button class="btn copy-btn" @click="doCopy">
-            {{ copyStatus === 'copied' ? 'Copied!' : copyStatus === 'failed' ? 'Copy failed' : 'Copy code instead' }}
+            {{ copyStatus === 'copied' ? 'Copied!' : copyStatus === 'failed' ? 'Copy failed' : 'Copy Code' }}
           </button>
         </div>
         <div v-else class="qr-loading">Preparing share…</div>

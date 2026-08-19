@@ -16,15 +16,15 @@ function createWorkout() {
   const w = workoutsStore.createWorkout(newTitle.value)
   newTitle.value = ''
   creating.value = false
-  router.push(`/plan/${w.id}/edit`)
+  router.push(`/plans/${w.id}/edit`)
 }
 
 function open(id) {
-  router.push(`/plan/${id}`)
+  router.push(`/plans/${id}`)
 }
 
 function handleImported(workout) {
-  router.push(`/plan/${workout.id}`)
+  router.push(`/plans/${workout.id}`)
 }
 
 const muscles = (wid) => workoutsStore.targetedMuscles(wid)

@@ -15,9 +15,9 @@ export const router = createRouter({
   routes: [
     { path: '/welcome', name: 'welcome', component: Welcome, meta: { skipGuard: true } },
     { path: '/', name: 'records', component: Records },
-    { path: '/plan', name: 'workouts', component: WorkoutsList },
-    { path: '/plan/:id', name: 'plan-detail', component: WorkoutDetail },
-    { path: '/plan/:id/edit', name: 'edit-plan', component: WorkoutEdit },
+    { path: '/plans', name: 'workouts', component: WorkoutsList },
+    { path: '/plans/:id', name: 'plan-detail', component: WorkoutDetail },
+    { path: '/plans/:id/edit', name: 'edit-plan', component: WorkoutEdit },
     { path: '/people', name: 'people', component: People },
     { path: '/library', name: 'library', component: ExerciseLibrary },
     { path: '/library/:id', name: 'exercise-detail', component: ExerciseDetail },

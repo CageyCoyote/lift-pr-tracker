@@ -62,7 +62,7 @@ function openExerciseHint(item) {
 
 function goEdit() {
   menuOpen.value = false
-  router.push(`/plan/${workout.value.id}/edit`)
+  router.push(`/plans/${workout.value.id}/edit`)
 }
 
 function openQR() {
@@ -75,7 +75,7 @@ function deleteWorkout() {
   const removed = workout.value
   const removedIndex = workoutsStore.workouts.findIndex((w) => w.id === removed.id)
   workoutsStore.removeWorkout(removed.id)
-  router.push('/plan')
+  router.push('/plans')
   showUndoToast(`Deleted "${removed.title}"`, () => workoutsStore.restoreWorkout(removed, removedIndex))
 }
 </script>
@@ -83,11 +83,11 @@ function deleteWorkout() {
 <template>
   <div v-if="!workout" class="page">
     <p class="empty-state">Workout not found.</p>
-    <router-link to="/plan" class="btn">Back to Workouts</router-link>
+    <router-link to="/plans" class="btn">Back to Workouts</router-link>
   </div>
 
   <div v-else class="page">
-    <router-link to="/plan" class="back-link">← Workouts</router-link>
+    <router-link to="/plans" class="back-link">← Workouts</router-link>
 
     <header class="page-header">
       <h1>{{ workout.title }}</h1>

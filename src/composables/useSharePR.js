@@ -55,10 +55,11 @@ export function useSharePR() {
     const link = buildShareLink(entry, personId)
     if (!link) return 'error'
     if (!navigator.share) return 'unsupported'
+    const person = peopleStore.people.find((p) => p.id === personId)
     try {
       await navigator.share({
         title: `PR: ${entry.exerciseName}`,
-        text: `${entry.exerciseName} PR from PR Tracker`,
+        text: `${person.name} wants to share a PR with you from PR Tracker`,
         url: link,
       })
       return 'shared'

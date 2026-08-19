@@ -18,7 +18,15 @@ export function useImportPR() {
   // shareId, personName, exerciseId, weight, unit, reps, date
   function decodePRPayload(text) {
     const PREFIX = 'PRK:PR:1:'
-    if (typeof text !== 'string' || !text.startsWith(PREFIX)) {
+    let raw = typeof text === 'string' ? text.trim() : ''
+
+    if (raw && !raw.startsWith(PREFIX)) {
+    // try {
+      const url = new URL(raw)
+      const d = url.searchParams.get('d')
+      if (d) raw = d
+    }
+    if (!text.startsWith(PREFIX)) {
       return { error: 'Not a valid PR Tracker share code.' }
     }
 

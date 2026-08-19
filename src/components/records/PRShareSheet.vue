@@ -10,6 +10,7 @@ const props = defineProps({
   // Omit both to open straight into "scan/paste" (import) mode.
   entry: { type: Object, default: null },
   personId: { type: String, default: null },
+  incomingCode: { type: String, default: null },
 })
 const emit = defineEmits(['update:modelValue', 'imported'])
 
@@ -80,6 +81,12 @@ async function generateQR() {
 
 async function doCopy() {
   const result = await copyToClipboard(props.entry, props.personId)
+  copyStatus.value = result === 'copied' ? 'copied' : 'failed'
+  setTimeout(() => (copyStatus.value = null), 2000)
+}
+
+async function doCopyLink() {
+  const result = await copyLinkToClipboard(props.entry, props.personId)
   copyStatus.value = result === 'copied' ? 'copied' : 'failed'
   setTimeout(() => (copyStatus.value = null), 2000)
 }
@@ -219,6 +226,9 @@ async function switchCamera() {
 // ── Lifecycle ───────────────────────────────────────────────────────────────
 
 watch(() => props.modelValue, (open) => {
+  if (!isShareMode.value && props.incomingCode) {
+    handleImportText(props.incomingCode)
+  }
   if (open) {
     isShareMode.value = !!props.entry
     tab.value = isShareMode.value ? 'share' : 'scan'
@@ -273,6 +283,9 @@ function close() {
           <p class="qr-hint">
             Have them scan this to import <strong>{{ entry?.exerciseName }}</strong>
           </p>
+          <button class="btn copy-btn" @click="doCopyLink">
+            {{ copyStatus === 'copied' ? 'Copied!' : copyStatus === 'failed' ? 'Copy failed' : 'Copy code instead' }}
+          </button>
           <button class="btn copy-btn" @click="doCopy">
             {{ copyStatus === 'copied' ? 'Copied!' : copyStatus === 'failed' ? 'Copy failed' : 'Copy code instead' }}
           </button>

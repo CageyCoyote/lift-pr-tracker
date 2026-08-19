@@ -1,12 +1,26 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRecordsStore } from '../../stores/records'
 import PersonSelector from '../../components/common/PersonSelector.vue'
 import PRCard from '../../components/records/PRCard.vue'
 import PRSearchForm from '../../components/records/PRSearchForm.vue'
 import PRShareSheet from '../../components/records/PRShareSheet.vue'
-import { useCurrentUser } from "../../composables/useCurrentUser.js";
+import { useCurrentUser } from "../../composables/useCurrentUser.js"
 import { usePrCelebration } from '../../composables/usePrCelebration'
+import { useRoute, useRouter } from 'vue-router'
+
+const route = useRoute()
+const router = useRouter()
+const incomingCode = ref(null)
+
+onMounted(() => {
+  if (route.query.d) {
+    incomingCode.value = route.query.d
+    importSheetOpen.value = true
+    // strip the query so a refresh doesn't re-trigger the import dialog
+    router.replace({ path: route.path })
+  }
+})
 
 const recordsStore = useRecordsStore()
 const { userId } = useCurrentUser()
@@ -89,7 +103,7 @@ function handleSaved(payload) {
     <PRSearchForm v-model="formOpen" :person-id="userId" @saved="handleSaved" />
 
     <!-- import a PR shared from another device -->
-    <PRShareSheet v-model="importSheetOpen" />
+    <PRShareSheet v-model="importSheetOpen" :incoming-code="incomingCode"/>
   </div>
 </template>
 

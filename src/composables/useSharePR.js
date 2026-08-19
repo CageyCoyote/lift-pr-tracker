@@ -34,6 +34,15 @@ export function useSharePR() {
     return `PRK:PR:1:${shareId}:${person.name}:${entry.exerciseId}:${entry.weight}:${entry.unit}:${entry.reps}:${entry.date}`
   }
 
+  function buildShareLink(entry, personId) {
+    const payload = encodePRPayload(entry, personId)
+    if (!payload) return null
+    const base = import.meta.env.VITE_BASE_URL || '/'
+    const url = new URL(base, window.location.origin)
+    url.searchParams.set('d', payload)
+    return url.toString()
+  }
+
   /**
    * Attempts Web Share API first. Returns a result the caller (the share
    * sheet UI) uses to decide what to show next:
@@ -42,15 +51,15 @@ export function useSharePR() {
    *   'cancelled'      — user dismissed the OS share sheet
    */
   async function shareViaWebShare(entry, personId) {
-    const textPayload = encodePRPayload(entry, personId)
-    if (!textPayload) return 'error'
-
+    // update shareViaWebShare to send a tappable link instead of raw text
+    const link = buildShareLink(entry, personId)
+    if (!link) return 'error'
     if (!navigator.share) return 'unsupported'
-
     try {
       await navigator.share({
         title: `PR: ${entry.exerciseName}`,
-        text: textPayload,
+        text: `${entry.exerciseName} PR from PR Tracker`,
+        url: link,
       })
       return 'shared'
     } catch (e) {

@@ -23,6 +23,9 @@ const {
   finishImport,
   cancelImport,
 } = useImportPR()
+// Tracks the last incomingCode value we've already handed to handleImportText,
+// so re-renders / prop churn can't replay the same deep link.
+const consumedIncomingCode = ref(null)
 
 const isShareMode = ref(!!props.entry)
 const tab = ref('share') // 'share' | 'scan'
@@ -227,9 +230,6 @@ async function switchCamera() {
 // ── Lifecycle ───────────────────────────────────────────────────────────────
 
 watch(() => props.modelValue, (open) => {
-  if (!isShareMode.value && props.incomingCode) {
-    handleImportText(props.incomingCode)
-  }
   if (open) {
     isShareMode.value = !!props.entry
     tab.value = isShareMode.value ? 'share' : 'scan'
@@ -240,7 +240,16 @@ watch(() => props.modelValue, (open) => {
     importError.value = null
     pasteText.value = ''
     confirmingOption.value = null
-    if (isShareMode.value) attemptShare()
+    if (isShareMode.value) {
+      attemptShare()
+    } else if (props.incomingCode && props.incomingCode !== consumedIncomingCode.value) {
+      // Only consume a given deep-link code once — this only runs on the
+      // open transition, never again when the sheet closes after import.
+      consumedIncomingCode.value = props.incomingCode
+      handleImportText(props.incomingCode)
+    } else {
+      return
+    }
   } else {
     stopScan()
     cancelImport()
@@ -304,13 +313,15 @@ function close() {
           </div>
           <p class="qr-hint">
             {{ pendingPayload.exerciseName }} — {{ pendingPayload.unit === 'bodyweight'
-              ? `${pendingPayload.reps} reps` : `${pendingPayload.weight}${pendingPayload.unit} × ${pendingPayload.reps}` }}
+              ? `${pendingPayload.reps} reps` : `${pendingPayload.weight}${pendingPayload.unit} × ${pendingPayload.reps}`
+            }}
             on {{ pendingPayload.date }}
           </p>
           <p class="qr-hint">Who is this?</p>
           <ul class="preview-list">
             <li v-for="opt in importOptions" :key="opt.id">
-              <button class="btn option-btn" :class="{ accent: opt.isNew, warn: opt.identityMismatch }" @click="chooseImportTarget(opt)">
+              <button class="btn option-btn" :class="{ accent: opt.isNew, warn: opt.identityMismatch }"
+                @click="chooseImportTarget(opt)">
                 {{ opt.name }}
               </button>
               <p v-if="confirmingOption?.id === opt.id" class="mismatch-warning">
@@ -325,13 +336,8 @@ function close() {
         <template v-else>
           <!-- Paste-a-code input -->
           <div class="paste-row">
-            <input
-              v-model="pasteText"
-              type="text"
-              class="paste-input"
-              placeholder="Paste share code (PRK:PR:1:...)"
-              @keyup.enter="submitPaste"
-            />
+            <input v-model="pasteText" type="text" class="paste-input" placeholder="Paste share code (PRK:PR:1:...)"
+              @keyup.enter="submitPaste" />
             <button class="btn btn-accent" @click="submitPaste" :disabled="!pasteText.trim()">Import</button>
           </div>
           <div v-if="importError" class="scan-error">{{ importError }}</div>
@@ -340,7 +346,8 @@ function close() {
           <div class="video-wrap">
             <video ref="videoRef" class="video" autoplay muted playsinline />
             <div class="scan-line" />
-            <button v-if="hasMultipleCameras && scanning" class="switch-overlay-btn" @click="switchCamera" aria-label="Switch camera">⟲</button>
+            <button v-if="hasMultipleCameras && scanning" class="switch-overlay-btn" @click="switchCamera"
+              aria-label="Switch camera">⟲</button>
           </div>
 
           <div v-if="scanError" class="scan-error">{{ scanError }}</div>
@@ -474,8 +481,17 @@ function close() {
 }
 
 @keyframes sweep {
-  0%, 100% { transform: translateY(-80px); opacity: 0.4; }
-  50% { transform: translateY(80px); opacity: 0.9; }
+
+  0%,
+  100% {
+    transform: translateY(-80px);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: translateY(80px);
+    opacity: 0.9;
+  }
 }
 
 .switch-overlay-btn {

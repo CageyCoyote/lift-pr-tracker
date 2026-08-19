@@ -103,7 +103,7 @@ function handleSaved(payload) {
     <PRSearchForm v-model="formOpen" :person-id="userId" @saved="handleSaved" />
 
     <!-- import a PR shared from another device -->
-    <PRShareSheet v-model="importSheetOpen" :incoming-code="incomingCode"/>
+    <PRShareSheet v-model="importSheetOpen" :incoming-code="incomingCode" @imported="incomingCode = null" />
   </div>
 </template>
 

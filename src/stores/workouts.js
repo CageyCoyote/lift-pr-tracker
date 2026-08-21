@@ -2,21 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { load, save } from '../utils/storage'
 import { useExercisesStore } from './exercises'
-import exerciseList from '../data/exercises.json'
+import { getOldToNewExerciseIdMap } from '../utils/exerciseIdMigration'
 
 // One-time migration: remap old slug-based exerciseIds (e.g. 'Barbell_Bench_Press_-_Medium_Grip')
-// to new short IDs (e.g. 'ex_002S'). Uses oldExId field as the bridge.
-// Safe to run on every boot — skips items already on the new scheme.
-function buildOldToNewMap() {
-  const map = {}
-  for (const ex of exerciseList) {
-    if (ex.oldExId && ex.id) map[ex.oldExId] = ex.id
-  }
-  return map
-}
-
+// to new short IDs (e.g. 'ex_002'). Safe to run on every boot — skips items
+// already on the new scheme (the map only contains legacy ids as keys).
 function migrateExerciseIds(workoutList) {
-  const oldToNew = buildOldToNewMap()
+  const oldToNew = getOldToNewExerciseIdMap()
   let migrated = 0
 
   for (const workout of workoutList) {
@@ -31,13 +23,19 @@ function migrateExerciseIds(workoutList) {
   if (migrated > 0) {
     console.info(`[workouts] Remapped ${migrated} exercise ID(s) to new scheme.`)
   }
-  return workoutList
+  return migrated
 }
 
 // Workout: { id, shareId, title, items: [{ id, exerciseId, exerciseName }], createdAt, updatedAt }
 export const useWorkoutsStore = defineStore('workouts', () => {
   const raw = load('workouts', [])
-  const workouts = ref(migrateExerciseIds(raw))
+  const migratedCount = migrateExerciseIds(raw)
+  const workouts = ref(raw)
+
+  // The migration above mutates in place and only touches the in-memory
+  // cache — persist it now so it actually lands in IndexedDB, instead of
+  // silently re-running (and re-logging) on every future boot.
+  if (migratedCount > 0) save('workouts', workouts.value)
 
   watch(workouts, (v) => save('workouts', v), { deep: true })
 

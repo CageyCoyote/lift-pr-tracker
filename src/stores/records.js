@@ -2,14 +2,47 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { load, save } from '../utils/storage'
 import { useExercisesStore } from "./exercises";
+import { getOldToNewExerciseIdMap } from '../utils/exerciseIdMigration'
 
 // An entry is one logged lift:
 // { id, personId, exerciseId, exerciseName, weight, reps, unit, date, importedFrom? }
 // `importedFrom` — when set, holds the sender's shareId. Only present on
 // entries created via useImportPR, so a bad mapping/import can be traced
 // and repaired later (see reassignImportedEntries below).
+
+// One-time migration: remap old slug-based exerciseIds (e.g.
+// 'Barbell_Bench_Press_-_Medium_Grip') to new short IDs (e.g. 'ex_002').
+// Entries logged before the exercise-data migration (or restored from an
+// old backup) can otherwise carry an exerciseId that no longer resolves
+// against the current exercises store, silently breaking anything that
+// looks the exercise up (e.g. "+ New PR"). Safe to run on every boot —
+// only touches entries whose id is still on the legacy scheme.
+function migrateEntryExerciseIds(entryList) {
+  const oldToNew = getOldToNewExerciseIdMap()
+  let migrated = 0
+
+  for (const entry of entryList) {
+    if (oldToNew[entry.exerciseId]) {
+      entry.exerciseId = oldToNew[entry.exerciseId]
+      migrated++
+    }
+  }
+
+  if (migrated > 0) {
+    console.info(`[records] Remapped ${migrated} exercise ID(s) to new scheme.`)
+  }
+  return migrated
+}
+
 export const useRecordsStore = defineStore('records', () => {
-  const entries = ref(load('entries', []))
+  const loadedEntries = load('entries', [])
+  const migratedCount = migrateEntryExerciseIds(loadedEntries)
+  const entries = ref(loadedEntries)
+
+  // The migration above mutates in place and only touches the in-memory
+  // cache — persist it now so it actually lands in IndexedDB, instead of
+  // silently re-running (and re-logging) on every future boot.
+  if (migratedCount > 0) save('entries', entries.value)
 
   watch(entries, (v) => save('entries', v), { deep: true })
 

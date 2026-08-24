@@ -118,13 +118,18 @@ export function load(key, fallback) {
   return fallback
 }
 
+// Returns a promise that resolves once the write has actually landed
+// (IndexedDB or localStorage). Most callers fire-and-forget this (the
+// reactive stores just want the write kicked off), but callers that need
+// to know the data is durably persisted before doing something else —
+// e.g. reloading the page right after a restore — can await it.
 export function save(key, value) {
   cache[key] = value // keep cache in sync immediately
 
   if (db) {
-    idbSet(key, value).catch((e) =>
+    return idbSet(key, value).catch((e) => {
       console.warn(`[storage] Failed to save "${key}":`, e)
-    )
+    })
   } else {
     // Fallback to localStorage if IDB is unavailable
     try {
@@ -132,6 +137,7 @@ export function save(key, value) {
     } catch {
       // storage full — data stays in memory via cache
     }
+    return Promise.resolve()
   }
 }
 
@@ -157,18 +163,22 @@ export function exportAllData() {
 // Unknown keys (e.g. from a newer app version) are ignored rather than
 // blindly trusted. Does NOT touch keys missing from the snapshot — callers
 // that want a full reset should clear storage themselves first.
+// Awaits every underlying write, so callers can safely reload/navigate
+// right after this resolves without racing the IndexedDB writes.
 // Returns the list of keys actually written.
-export function restoreAllData(data) {
+export async function restoreAllData(data) {
   if (!data || typeof data !== 'object') {
     throw new Error('Backup file is missing its data.')
   }
 
   const written = []
+  const pending = []
   for (const key of ALL_KEYS) {
     if (key in data) {
-      save(key, data[key])
+      pending.push(save(key, data[key]))
       written.push(key)
     }
   }
+  await Promise.all(pending)
   return written
 }

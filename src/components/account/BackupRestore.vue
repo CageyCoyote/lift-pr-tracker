@@ -58,12 +58,15 @@ async function handleFileChosen(e) {
     )
     if (!confirmed) return
 
-    restoreAllData(parsed.data)
+    await restoreAllData(parsed.data)
 
     // Every store initialized its reactive state from storage at app boot —
     // just writing to storage won't update those refs already in memory,
     // so a reload is the simplest reliable way to bring everything in
-    // sync with the restored data.
+    // sync with the restored data. restoreAllData() above is awaited, so
+    // the underlying IndexedDB writes are guaranteed to have landed before
+    // we reload — otherwise the reload could race ahead of the writes and
+    // the restore would silently under-apply.
     window.location.reload()
   } catch (err) {
     console.error('[backup] Restore failed:', err)

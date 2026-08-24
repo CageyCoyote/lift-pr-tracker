@@ -150,5 +150,16 @@ export const useRecordsStore = defineStore('records', () => {
       .sort((a, b) => a.best.exerciseName.localeCompare(b.best.exerciseName))
   }
 
-  return { entries, addEntry, removeEntry, restoreEntry, removeEntriesForPerson, reassignImportedEntries, updateEntry, historyFor, bestFor, bestsForPerson }
+  return {
+    entries,
+    addEntry,
+    removeEntry,
+    restoreEntry,
+    removeEntriesForPerson,
+    reassignImportedEntries,
+    updateEntry,
+    historyFor,
+    bestFor,
+    bestsForPerson
+  }
 })

@@ -3,7 +3,9 @@ import { computed } from 'vue'
 
 const props = defineProps({
   // Expects entries sorted newest-first, same shape as recordsStore.historyFor()
-  history: { type: Array, required: true }
+  history: { type: Array, required: true },
+  // Target metric (weight or reps, matching the entries' unit). null = no goal.
+  goalTarget: { type: Number, default: null }
 })
 
 // Chart wants oldest → newest (left to right)
@@ -25,8 +27,12 @@ const PAD_TOP = 16
 const PAD_BOTTOM = 24
 
 const values = computed(() => points.value.map(metricFor))
-const minVal = computed(() => Math.min(...values.value))
-const maxVal = computed(() => Math.max(...values.value))
+// The goal line needs to fit on the same scale as the plotted values, so a
+// goal above the current best (the common case, since that's the point of
+// setting one) extends the chart's range rather than getting clipped off.
+const goalValues = computed(() => (props.goalTarget != null ? [props.goalTarget] : []))
+const minVal = computed(() => Math.min(...values.value, ...goalValues.value))
+const maxVal = computed(() => Math.max(...values.value, ...goalValues.value))
 // Avoid a flat/zero-height range when every value is identical
 const range = computed(() => (maxVal.value - minVal.value) || 1)
 
@@ -68,6 +74,16 @@ function shortDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
+
+const goalY = computed(() => {
+  if (props.goalTarget == null || coords.value.length === 0) return null
+  const usableH = H - PAD_TOP - PAD_BOTTOM
+  return PAD_TOP + usableH - ((props.goalTarget - minVal.value) / range.value) * usableH
+})
+
+const goalMet = computed(() =>
+  props.goalTarget != null && values.value.some((v) => v >= props.goalTarget)
+)
 </script>
 
 <template>
@@ -77,6 +93,11 @@ function shortDate(dateStr) {
     </div>
     <svg v-else :viewBox="`0 0 ${W} ${H}`" class="chart-svg" preserveAspectRatio="none">
       <path :d="areaPath" class="area" />
+      <line
+        v-if="goalY !== null"
+        :x1="PAD_X" :x2="W - PAD_X" :y1="goalY" :y2="goalY"
+        class="goal-line" :class="{ met: goalMet }"
+      />
       <path :d="linePath" class="line" />
       <g v-for="(c, i) in coords" :key="i">
         <circle :cx="c.x" :cy="c.y" r="3" class="dot" :class="{ 'dot-best': metricFor(c.entry) === maxVal }" />
@@ -88,6 +109,9 @@ function shortDate(dateStr) {
       </g>
     </svg>
     <div v-if="points.length >= 2" class="chart-legend">
+      <span v-if="goalTarget != null" class="goal-legend" :class="{ met: goalMet }">
+        Goal: {{ goalTarget }}{{ metricLabel === 'reps' ? ' reps' : metricLabel }}
+      </span>
       <span>{{ minVal }}{{ metricLabel === 'reps' ? ' reps' : metricLabel }} – {{ maxVal }}{{ metricLabel === 'reps' ? ' reps' : metricLabel }}</span>
     </div>
   </div>
@@ -125,6 +149,16 @@ function shortDate(dateStr) {
   stroke-linecap: round;
 }
 
+.goal-line {
+  stroke: #000;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.goal-line.met {
+  stroke: var(--color-green);
+}
+
 .dot {
   fill: var(--color-surface);
   stroke: var(--color-accent);
@@ -142,10 +176,21 @@ function shortDate(dateStr) {
 }
 
 .chart-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
   text-align: right;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--color-text-dim);
   padding-top: 2px;
+}
+
+.goal-legend {
+  text-align: left;
+}
+
+.goal-legend.met {
+  color: var(--color-green);
 }
 </style>

@@ -4,6 +4,7 @@ import { load, save } from '../utils/storage'
 import { uniqueNamesGenerator, adjectives, animals, NumberDictionary } from 'unique-names-generator'
 import { useContactsStore } from './contacts'
 import { useRecordsStore } from './records'
+import { useGoalsStore } from './goals'
 import { useSettingsStore } from './settings'
 
 // Simple shareId generator using the installed library
@@ -74,6 +75,7 @@ export const usePeopleStore = defineStore('people', () => {
     // need an active app instance to instantiate.
     useContactsStore().removeMappingsForPerson(id)
     useRecordsStore().removeEntriesForPerson(id)
+    useGoalsStore().removeGoalsForPerson(id)
     useSettingsStore().clearIconColor(id)
   }
 

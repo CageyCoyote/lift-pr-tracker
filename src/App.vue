@@ -7,6 +7,7 @@ import UndoToast from './components/common/UndoToast.vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from './stores/settings'
 import { useCurrentUser } from "./composables/useCurrentUser.js";
+import { APP_VERSION } from './version.js'
 
 const router = useRouter()
 const settingsStore = useSettingsStore()
@@ -31,6 +32,8 @@ onMounted(() => {
 </script>
 
 <template>
+  <span class="version-tag">v{{ APP_VERSION }}</span>
+
   <button
     class="account-btn"
     :style="{ color: settingsStore.effectiveIconColor(userId) }"
@@ -52,6 +55,18 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.version-tag {
+  position: fixed;
+  top: 14px;
+  left: 16px;
+  z-index: 10;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-dim);
+  opacity: 0.6;
+  user-select: none;
+}
+
 .account-btn {
   position: fixed;
   top: 14px;

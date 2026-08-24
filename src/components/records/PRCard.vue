@@ -3,11 +3,13 @@ import { ref, reactive, computed, watch, nextTick } from 'vue'
 import PlateBadge from '../common/PlateBadge.vue'
 import { useRecordsStore } from '../../stores/records'
 import { useExercisesStore } from '../../stores/exercises'
+import { useGoalsStore } from '../../stores/goals'
 import PRForm from './PRForm.vue'
 import PREditForm from './PREditForm.vue'
 import PRNewForm from './PRNewForm.vue'
 import PRShareSheet from './PRShareSheet.vue'
 import PRChart from './PRChart.vue'
+import GoalForm from './GoalForm.vue'
 import { usePrCelebration } from '../../composables/usePrCelebration'
 import { useUndoToast } from '../../composables/useUndoToast'
 import { estimateOneRepMax } from '../../utils/oneRepMax'
@@ -20,6 +22,7 @@ const props = defineProps({
 
 const recordsStore = useRecordsStore()
 const exercisesStore = useExercisesStore()
+const goalsStore = useGoalsStore()
 const { celebrateNewPr } = usePrCelebration()
 const { showUndoToast } = useUndoToast()
 const expanded = ref(false)
@@ -28,6 +31,39 @@ const viewMode = ref('chart') // 'log' | 'chart'
 const bestOneRm = computed(() =>
   estimateOneRepMax(props.best.weight, props.best.reps, props.best.unit)
 )
+
+// ── Goal tracking ───────────────────────────────────────────────────────────
+const goal = computed(() => goalsStore.getGoal(props.personId, props.exerciseId))
+
+// Ratio of best-ever performance to the goal's target (e.g. 1.32 = 132% of
+// goal), or null when no goal is set. Compares like-for-like: reps for
+// bodyweight exercises, weight otherwise — same split used everywhere else.
+const goalProgress = computed(() => {
+  if (!goal.value) return null
+  const target = goalsStore.targetMetric(goal.value)
+  if (!target) return null
+  const bestMetric = props.best.unit === 'bodyweight' ? props.best.reps : props.best.weight
+  return bestMetric / target
+})
+
+const goalOvershoot = computed(() => goalProgress.value !== null && goalProgress.value > 1)
+const goalPercentText = computed(() =>
+  goalProgress.value !== null ? `${Math.round(goalProgress.value * 100)}% of Goal` : null
+)
+
+const goalFormOpen = ref(false)
+
+function openGoalForm() {
+  goalFormOpen.value = true
+}
+
+function handleGoalSaved(payload) {
+  goalsStore.setGoal({ personId: props.personId, exerciseId: props.exerciseId, ...payload })
+}
+
+function handleGoalRemoved() {
+  goalsStore.removeGoal(props.personId, props.exerciseId)
+}
 
 // New PR form state
 const formOpen = ref(false)
@@ -51,10 +87,19 @@ function remove(id) {
   recordsStore.removeEntry(id)
   if (!entry) return
 
+  // If that was the last entry for this exercise, the whole PR card is
+  // about to disappear — any goal tied to it is now orphaned, so clean it
+  // up too. Snapshot it first so undo can put it back if the delete is undone.
+  const orphanedGoal = history().length === 0 ? goal.value : null
+  if (orphanedGoal) goalsStore.removeGoal(props.personId, props.exerciseId)
+
   const summary = entry.unit === 'bodyweight'
     ? `${entry.reps} reps (bodyweight)`
     : `${entry.weight}${entry.unit} × ${entry.reps}`
-  showUndoToast(`Deleted ${entry.exerciseName} — ${summary}`, () => recordsStore.restoreEntry(entry))
+  showUndoToast(`Deleted ${entry.exerciseName} — ${summary}`, () => {
+    recordsStore.restoreEntry(entry)
+    if (orphanedGoal) goalsStore.setGoal({ personId: props.personId, exerciseId: props.exerciseId, ...orphanedGoal })
+  })
 }
 
 function openLog() {
@@ -234,8 +279,8 @@ function resetSwipe(id = activeSwipeId) {
       @contextmenu.prevent
     >
       <div class="card-top-row">
-        <PlateBadge v-if="best.unit === 'bodyweight'" :weight="best.reps" unit="reps" />
-        <PlateBadge v-else :weight="best.weight" :unit="best.unit" />
+        <PlateBadge v-if="best.unit === 'bodyweight'" :weight="best.reps" unit="reps" :progress="goalProgress" />
+        <PlateBadge v-else :weight="best.weight" :unit="best.unit" :progress="goalProgress" />
         <div class="card-info">
           <span class="card-name">{{ best.exerciseName }}</span>
           <span class="card-meta">
@@ -249,6 +294,7 @@ function resetSwipe(id = activeSwipeId) {
     </button>
 
     <div v-if="expanded" class="history">
+      <div v-if="goalOvershoot" class="card-1rm-line goal-crushed-line">{{ goalPercentText }}!</div>
       <div class="log-row">
         <button v-if="props.personId" class="btn log-btn" @click="openLog()">+ New PR</button>
 
@@ -277,9 +323,18 @@ function resetSwipe(id = activeSwipeId) {
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>
         </button>
+
+        <button v-if="viewMode === 'chart' && props.personId" class="action-btn goal-btn"
+          @click="openGoalForm()" aria-label="Set goal">
+          <!-- <span>Set Goal</span> -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" />
+          </svg>
+        </button>
       </div>
 
-      <PRChart v-if="viewMode === 'chart'" :history="history()" />
+      <PRChart v-if="viewMode === 'chart'" :history="history()" :goal-target="goal ? goalsStore.targetMetric(goal) : null" />
 
       <template v-else>
         <div v-for="h in history()" :key="h.id" class="history-row-wrap">
@@ -328,6 +383,16 @@ function resetSwipe(id = activeSwipeId) {
 
     <!-- Share this PR -->
     <PRShareSheet v-model="shareSheetOpen" :entry="shareEntry" :person-id="props.personId" />
+
+    <!-- Set/Edit/Remove the Goal for this PR -->
+    <GoalForm
+      v-model="goalFormOpen"
+      :exercise-name="best.exerciseName"
+      :unit="best.unit"
+      :initial-goal="goal"
+      @saved="handleGoalSaved"
+      @removed="handleGoalRemoved"
+    />
   </div>
 </template>
 
@@ -373,6 +438,15 @@ function resetSwipe(id = activeSwipeId) {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--color-text-dim);
+}
+
+.goal-crushed-line {
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 8px;
+  border-top: none;
+  color: var(--color-green);
+  font-weight: 600;
 }
 
 .card-info {
@@ -461,11 +535,13 @@ function resetSwipe(id = activeSwipeId) {
   justify-content: center;
 }
 
-.edit-btn {
+.edit-btn,
+.goal-btn {
   color: var(--color-steel);
 }
 
-.edit-btn:hover {
+.edit-btn:hover,
+.goal-btn:hover {
   color: var(--color-text);
   background: var(--color-surface-2);
 }
@@ -515,7 +591,8 @@ function resetSwipe(id = activeSwipeId) {
   gap: 2px;
 }
 
-.edit-btn {
+.edit-btn,
+.goal-btn {
   grid-column: 3;
   justify-self: end;
 }

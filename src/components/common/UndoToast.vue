@@ -1,5 +1,5 @@
 <script setup>
-import { useUndoToast, UNDO_DISPLAY_MS } from '../../composables/useUndoToast'
+import { useUndoToast } from '../../composables/useUndoToast'
 
 const { toast, undo, dismissUndoToast } = useUndoToast()
 
@@ -11,11 +11,15 @@ function handleUndo() {
 
 <template>
   <Transition name="undo-slide">
-    <div v-if="toast" :key="toast" class="undo-toast">
+    <div v-if="toast" :key="toast" class="undo-toast" :class="toast.variant">
+      <svg v-if="toast.variant === 'success'" class="toast-icon" width="18" height="18" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
       <span class="undo-message">{{ toast.message }}</span>
-      <button class="undo-btn" @click="handleUndo">Undo</button>
+      <button v-if="toast.onUndo" class="undo-btn" @click="handleUndo">Undo</button>
       <button class="undo-dismiss" aria-label="Dismiss" @click="dismissUndoToast">×</button>
-      <div class="undo-progress" :style="{ animationDuration: UNDO_DISPLAY_MS + 'ms' }" />
+      <div class="undo-progress" :style="{ animationDuration: toast.durationMs + 'ms' }" />
     </div>
   </Transition>
 </template>
@@ -38,6 +42,15 @@ function handleUndo() {
   padding: 12px 10px 12px 14px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
   overflow: hidden;
+}
+
+.undo-toast.success {
+  border-color: var(--color-green);
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  color: var(--color-green);
 }
 
 .undo-message {
@@ -88,6 +101,10 @@ function handleUndo() {
   animation-name: undo-shrink;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
+}
+
+.undo-toast.success .undo-progress {
+  background: var(--color-green);
 }
 
 @keyframes undo-shrink {

@@ -3,12 +3,14 @@ import { useRecordsStore } from '../stores/records'
 import { usePeopleStore } from '../stores/people'
 import { useContactsStore } from '../stores/contacts'
 import { useExercisesStore } from '../stores/exercises'
+import { useUndoToast } from './useUndoToast'
 
 export function useImportPR() {
   const recordsStore = useRecordsStore()
   const peopleStore = usePeopleStore()
   const contactsStore = useContactsStore()
   const exercisesStore = useExercisesStore()
+  const { showToast } = useUndoToast()
 
   const importDialogOpen = ref(false)
   const pendingPayload = ref(null)
@@ -131,6 +133,13 @@ export function useImportPR() {
       date: payload.date,
       importedFrom: payload.shareId,
     })
+
+    // Use the resolved local person's name rather than payload.personName —
+    // if this landed on an existing contact (rather than a newly created
+    // person), their local name may differ from what the sender's device
+    // called them.
+    const localName = peopleStore.people.find(p => p.id === targetPersonId)?.name ?? payload.personName
+    showToast(`Imported PR from ${localName}`, { variant: 'success' })
 
     // Reset
     importDialogOpen.value = false

@@ -10,6 +10,7 @@ import { useFavoritesStore } from '../../stores/favourites'
 import WorkoutQRSheet from '../../components/workouts/WorkoutQRSheet.vue'
 import { useCurrentUser } from "../../composables/useCurrentUser.js";
 import { usePrCelebration } from '../../composables/usePrCelebration'
+import { useGoalCelebration } from '../../composables/useGoalCelebration'
 import { useUndoToast } from '../../composables/useUndoToast'
 
 const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
@@ -22,6 +23,7 @@ const recordsStore = useRecordsStore()
 const favouritesStore = useFavoritesStore()
 const { userId } = useCurrentUser()
 const { celebrateNewPr } = usePrCelebration()
+const { celebrateGoalMet } = useGoalCelebration()
 const { showUndoToast } = useUndoToast()
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
@@ -51,8 +53,9 @@ function openLog(item) {
 }
 
 function handleSaved(payload) {
-  const { entry, isNewBest } = recordsStore.addEntry({ personId: userId.value, ...payload })
-  if (isNewBest) celebrateNewPr(entry)
+  const { entry, isNewBest, goalJustMet } = recordsStore.addEntry({ personId: userId.value, ...payload })
+  if (goalJustMet) celebrateGoalMet(entry)
+  else if (isNewBest) celebrateNewPr(entry)
 }
 
 function openExerciseHint(item) {

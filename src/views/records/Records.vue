@@ -7,6 +7,7 @@ import PRSearchForm from '../../components/records/PRSearchForm.vue'
 import PRShareSheet from '../../components/records/PRShareSheet.vue'
 import { useCurrentUser } from "../../composables/useCurrentUser.js"
 import { usePrCelebration } from '../../composables/usePrCelebration'
+import { useGoalCelebration } from '../../composables/useGoalCelebration'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -25,6 +26,7 @@ onMounted(() => {
 const recordsStore = useRecordsStore()
 const { userId } = useCurrentUser()
 const { celebrateNewPr } = usePrCelebration()
+const { celebrateGoalMet } = useGoalCelebration()
 const formOpen = ref(false)
 const importSheetOpen = ref(false)
 
@@ -60,8 +62,9 @@ const sortedBests = computed(() => {
 })
 
 function handleSaved(payload) {
-  const { entry, isNewBest } = recordsStore.addEntry({ personId: userId.value, ...payload })
-  if (isNewBest) celebrateNewPr(entry)
+  const { entry, isNewBest, goalJustMet } = recordsStore.addEntry({ personId: userId.value, ...payload })
+  if (goalJustMet) celebrateGoalMet(entry)
+  else if (isNewBest) celebrateNewPr(entry)
 }
 </script>
 

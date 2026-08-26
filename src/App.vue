@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import AppNav from './components/common/AppNav.vue'
 import InstallBanner from './components/common/InstallBanner.vue'
 import PrCelebration from './components/common/PrCelebration.vue'
+import GoalCelebration from './components/common/GoalCelebration.vue'
 import UndoToast from './components/common/UndoToast.vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from './stores/settings'
@@ -51,6 +52,7 @@ onMounted(() => {
   <AppNav />
   <InstallBanner />
   <PrCelebration />
+  <GoalCelebration />
   <UndoToast />
 </template>
 

@@ -11,6 +11,7 @@ import PRShareSheet from './PRShareSheet.vue'
 import PRChart from './PRChart.vue'
 import GoalForm from './GoalForm.vue'
 import { usePrCelebration } from '../../composables/usePrCelebration'
+import { useGoalCelebration } from '../../composables/useGoalCelebration'
 import { useUndoToast } from '../../composables/useUndoToast'
 import { estimateOneRepMax } from '../../utils/oneRepMax'
 
@@ -24,6 +25,7 @@ const recordsStore = useRecordsStore()
 const exercisesStore = useExercisesStore()
 const goalsStore = useGoalsStore()
 const { celebrateNewPr } = usePrCelebration()
+const { celebrateGoalMet } = useGoalCelebration()
 const { showUndoToast } = useUndoToast()
 const expanded = ref(false)
 const viewMode = ref('chart') // 'log' | 'chart'
@@ -114,8 +116,9 @@ function openEdit(entry) {
 }
 
 function handleSaved(payload) {
-  const { entry, isNewBest } = recordsStore.addEntry({ personId: props.personId, ...payload })
-  if (isNewBest) celebrateNewPr(entry)
+  const { entry, isNewBest, goalJustMet } = recordsStore.addEntry({ personId: props.personId, ...payload })
+  if (goalJustMet) celebrateGoalMet(entry)
+  else if (isNewBest) celebrateNewPr(entry)
 }
 
 function handleUpdated(payload) {
@@ -326,8 +329,7 @@ function resetSwipe(id = activeSwipeId) {
 
         <button v-if="viewMode === 'chart' && props.personId" class="action-btn goal-btn"
           @click="openGoalForm()" aria-label="Set goal">
-          <!-- <span>Set Goal</span> -->
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" />
           </svg>

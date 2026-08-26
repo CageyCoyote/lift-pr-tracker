@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, watch, onBeforeUnmount } from 'vue'
 import { usePrCelebration } from '../../composables/usePrCelebration'
 
 const { celebration, dismissCelebration } = usePrCelebration()
@@ -37,6 +37,127 @@ const summary = computed(() => {
     ? `${c.reps} rep${c.reps > 1 ? 's' : ''} (bodyweight)`
     : `${c.weight}${c.unit}`
 })
+
+// --- Web Audio API: Gospel Rhodes Chime Synthesizer ---
+// let audioCtx = null
+// let activeNodes = []
+
+// function getAudioContext() {
+//   if (!audioCtx && typeof window !== 'undefined') {
+//     const AudioContextClass = window.AudioContext || window.webkitAudioContext
+//     if (AudioContextClass) {
+//       audioCtx = new AudioContextClass()
+//     }
+//   }
+//   if (audioCtx && audioCtx.state === 'suspended') {
+//     audioCtx.resume()
+//   }
+//   return audioCtx
+// }
+
+// function stopActiveAudio() {
+//   activeNodes.forEach(node => {
+//     try {
+//       node.stop()
+//       node.disconnect()
+//     } catch (_) {}
+//   })
+//   activeNodes = []
+// }
+
+// function playGospelRhodesChime() {
+//   const actx = getAudioContext()
+//   if (!actx) return
+
+//   stopActiveAudio()
+//   const now = actx.currentTime
+
+//   // Helper for FM electric piano tine voice
+//   function createRhodesVoice(freq, startTime, duration, vol, modRatio = 1.0, modIndex = 2.2) {
+//     const carrier = actx.createOscillator()
+//     const modulator = actx.createOscillator()
+//     const modGain = actx.createGain()
+//     const voiceGain = actx.createGain()
+
+//     carrier.type = 'sine'
+//     carrier.frequency.setValueAtTime(freq, startTime)
+
+//     modulator.type = 'sine'
+//     modulator.frequency.setValueAtTime(freq * modRatio, startTime)
+
+//     // FM tine envelope (metallic bell transient decay)
+//     modGain.gain.setValueAtTime(freq * modIndex, startTime)
+//     modGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.18)
+
+//     // Main voice envelope
+//     voiceGain.gain.setValueAtTime(0.001, startTime)
+//     voiceGain.gain.linearRampToValueAtTime(vol, startTime + 0.008)
+//     voiceGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration)
+
+//     modulator.connect(modGain)
+//     modGain.connect(carrier.frequency)
+
+//     carrier.connect(voiceGain)
+//     voiceGain.connect(actx.destination)
+
+//     modulator.start(startTime)
+//     modulator.stop(startTime + duration + 0.05)
+//     carrier.start(startTime)
+//     carrier.stop(startTime + duration + 0.05)
+
+//     activeNodes.push(modulator, carrier)
+//   }
+
+//   // Pre-roll silence buffer: 180ms
+//   const tStart = now + 0.18
+
+//   // 1. Expressive Slide Pickup: F3 (0.18s) -> G3 (0.24s)
+//   createRhodesVoice(174.61, tStart, 0.07, 0.35, 1.0, 1.8)        // F3
+//   createRhodesVoice(196.00, tStart + 0.06, 0.10, 0.45, 1.0, 2.0) // G3
+
+//   // 2. Grand Triumphant C Add9 Chord at tStart + 0.15s (now + 0.33s)
+//   const tChord = tStart + 0.15
+//   const chordDuration = 2.0
+
+//   // Deep Warm Sub-Bass (C2 = 65.41Hz)
+//   const subOsc = actx.createOscillator()
+//   const subGain = actx.createGain()
+//   subOsc.type = 'sine'
+//   subOsc.frequency.setValueAtTime(65.41, tChord)
+//   subGain.gain.setValueAtTime(0.001, tChord)
+//   subGain.gain.linearRampToValueAtTime(0.35, tChord + 0.015)
+//   subGain.gain.exponentialRampToValueAtTime(0.0001, tChord + 1.8)
+
+//   subOsc.connect(subGain)
+//   subGain.connect(actx.destination)
+//   subOsc.start(tChord)
+//   subOsc.stop(tChord + 1.85)
+//   activeNodes.push(subOsc)
+
+//   // Full Rich Voicing: C3 / C4 / E4 / G4 / D5
+//   createRhodesVoice(130.81, tChord, chordDuration, 0.40, 1.0, 1.5) // C3
+//   createRhodesVoice(261.63, tChord, chordDuration, 0.45, 1.0, 2.2) // C4
+//   createRhodesVoice(329.63, tChord, chordDuration, 0.38, 1.0, 2.1) // E4
+//   createRhodesVoice(392.00, tChord, chordDuration, 0.35, 1.0, 2.3) // G4
+//   createRhodesVoice(587.33, tChord, chordDuration, 0.28, 1.0, 2.5) // D5
+
+//   if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+//     navigator.vibrate([25, 40, 35])
+//   }
+// }
+
+// watch(celebration, (newVal) => {
+//   if (newVal) {
+//     playGospelRhodesChime()
+//   }
+// })
+
+// onBeforeUnmount(() => {
+//   stopActiveAudio()
+//   if (audioCtx && audioCtx.state !== 'closed') {
+//     audioCtx.close()
+//   }
+// })
 </script>
 
 <template>

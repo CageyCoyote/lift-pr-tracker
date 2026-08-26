@@ -8,6 +8,7 @@ import ExercisePicker from '../../components/exercises/ExercisePicker.vue'
 import PRForm from '../../components/records/PRForm.vue'
 import { useCurrentUser } from "../../composables/useCurrentUser.js";
 import { usePrCelebration } from '../../composables/usePrCelebration'
+import { useGoalCelebration } from '../../composables/useGoalCelebration'
 import { useUndoToast } from '../../composables/useUndoToast'
 
 const route = useRoute()
@@ -17,6 +18,7 @@ const exercisesStore = useExercisesStore()
 const recordsStore = useRecordsStore()
 const { userId } = useCurrentUser()
 const { celebrateNewPr } = usePrCelebration()
+const { celebrateGoalMet } = useGoalCelebration()
 const { showUndoToast } = useUndoToast()
 
 const workout = computed(() => workoutsStore.getWorkout(route.params.id))
@@ -49,8 +51,9 @@ function removeItemWithUndo(item) {
 }
 
 function handleSaved(payload) {
-  const { entry, isNewBest } = recordsStore.addEntry({ personId: userId.value, ...payload })
-  if (isNewBest) celebrateNewPr(entry)
+  const { entry, isNewBest, goalJustMet } = recordsStore.addEntry({ personId: userId.value, ...payload })
+  if (goalJustMet) celebrateGoalMet(entry)
+  else if (isNewBest) celebrateNewPr(entry)
 }
 
 function startRename() {

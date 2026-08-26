@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { load, save } from '../utils/storage'
 import { useExercisesStore } from "./exercises";
+import { useGoalsStore } from './goals'
 import { getOldToNewExerciseIdMap } from '../utils/exerciseIdMigration'
 
 // An entry is one logged lift:
@@ -75,7 +76,23 @@ export const useRecordsStore = defineStore('records', () => {
       metric(entry) > metric(previousBest) ||
       (metric(entry) === metric(previousBest) && entry.reps > previousBest.reps)
 
-    return { entry, isNewBest, previousBest }
+    // goalJustMet is true only for the ONE entry that crosses a goal from
+    // under-target to at/over-target — not for every entry logged while
+    // already past it. Callers use this to show a distinct celebration
+    // just for the crossing, and the standard PR celebration otherwise.
+    const goalsStore = useGoalsStore()
+    const goal = goalsStore.getGoal(personId, exerciseId)
+    let goalJustMet = false
+    if (goal) {
+      const target = goalsStore.targetMetric(goal)
+      if (target) {
+        const wasUnderGoal = !previousBest || metric(previousBest) < target
+        const nowAtOrOverGoal = metric(entry) >= target
+        goalJustMet = wasUnderGoal && nowAtOrOverGoal
+      }
+    }
+
+    return { entry, isNewBest, previousBest, goalJustMet }
   }
 
   function removeEntry(id) {
@@ -150,16 +167,5 @@ export const useRecordsStore = defineStore('records', () => {
       .sort((a, b) => a.best.exerciseName.localeCompare(b.best.exerciseName))
   }
 
-  return {
-    entries,
-    addEntry,
-    removeEntry,
-    restoreEntry,
-    removeEntriesForPerson,
-    reassignImportedEntries,
-    updateEntry,
-    historyFor,
-    bestFor,
-    bestsForPerson
-  }
+  return { entries, addEntry, removeEntry, restoreEntry, removeEntriesForPerson, reassignImportedEntries, updateEntry, historyFor, bestFor, bestsForPerson }
 })

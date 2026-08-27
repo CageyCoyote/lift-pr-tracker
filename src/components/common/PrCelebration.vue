@@ -38,126 +38,113 @@ const summary = computed(() => {
     : `${c.weight}${c.unit}`
 })
 
-// --- Web Audio API: Gospel Rhodes Chime Synthesizer ---
-// let audioCtx = null
-// let activeNodes = []
+// --- Web Audio API: Low-Register "Ta-Da" Fanfare ---
+let audioCtx = null
+let activeNodes = []
 
-// function getAudioContext() {
-//   if (!audioCtx && typeof window !== 'undefined') {
-//     const AudioContextClass = window.AudioContext || window.webkitAudioContext
-//     if (AudioContextClass) {
-//       audioCtx = new AudioContextClass()
-//     }
-//   }
-//   if (audioCtx && audioCtx.state === 'suspended') {
-//     audioCtx.resume()
-//   }
-//   return audioCtx
-// }
+function getAudioContext() {
+  if (!audioCtx && typeof window !== 'undefined') {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext
+    if (AudioContextClass) {
+      audioCtx = new AudioContextClass()
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume()
+  }
+  return audioCtx
+}
 
-// function stopActiveAudio() {
-//   activeNodes.forEach(node => {
-//     try {
-//       node.stop()
-//       node.disconnect()
-//     } catch (_) {}
-//   })
-//   activeNodes = []
-// }
+function stopActiveAudio() {
+  activeNodes.forEach(node => {
+    try {
+      node.stop()
+      node.disconnect()
+    } catch (_) {}
+  })
+  activeNodes = []
+}
 
-// function playGospelRhodesChime() {
-//   const actx = getAudioContext()
-//   if (!actx) return
+// Simple brass-ish voice: sawtooth through a lowpass, quick punchy envelope.
+function createBrassVoice(actx, freq, startTime, duration, vol) {
+  const osc = actx.createOscillator()
+  const gain = actx.createGain()
+  const filter = actx.createBiquadFilter()
 
-//   stopActiveAudio()
-//   const now = actx.currentTime
+  osc.type = 'sawtooth'
+  osc.frequency.setValueAtTime(freq, startTime)
 
-//   // Helper for FM electric piano tine voice
-//   function createRhodesVoice(freq, startTime, duration, vol, modRatio = 1.0, modIndex = 2.2) {
-//     const carrier = actx.createOscillator()
-//     const modulator = actx.createOscillator()
-//     const modGain = actx.createGain()
-//     const voiceGain = actx.createGain()
+  filter.type = 'lowpass'
+  filter.Q.setValueAtTime(1.2, startTime)
+  filter.frequency.setValueAtTime(1800, startTime)
+  filter.frequency.exponentialRampToValueAtTime(600, startTime + duration)
 
-//     carrier.type = 'sine'
-//     carrier.frequency.setValueAtTime(freq, startTime)
+  gain.gain.setValueAtTime(0.001, startTime)
+  gain.gain.linearRampToValueAtTime(vol, startTime + 0.012)
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration)
 
-//     modulator.type = 'sine'
-//     modulator.frequency.setValueAtTime(freq * modRatio, startTime)
+  osc.connect(filter)
+  filter.connect(gain)
+  gain.connect(actx.destination)
 
-//     // FM tine envelope (metallic bell transient decay)
-//     modGain.gain.setValueAtTime(freq * modIndex, startTime)
-//     modGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.18)
+  osc.start(startTime)
+  osc.stop(startTime + duration + 0.03)
+  activeNodes.push(osc)
+}
 
-//     // Main voice envelope
-//     voiceGain.gain.setValueAtTime(0.001, startTime)
-//     voiceGain.gain.linearRampToValueAtTime(vol, startTime + 0.008)
-//     voiceGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration)
+function playTaDaFanfare() {
+  const actx = getAudioContext()
+  if (!actx) return
 
-//     modulator.connect(modGain)
-//     modGain.connect(carrier.frequency)
+  stopActiveAudio()
+  const now = actx.currentTime
 
-//     carrier.connect(voiceGain)
-//     voiceGain.connect(actx.destination)
+  // "Ta" — short low pickup note
+  createBrassVoice(actx, 130.81, now + 0.00, 0.11, 0.32) // C3
+  // "Da" — jumps up a 4th, still low register
+  createBrassVoice(actx, 174.61, now + 0.11, 0.14, 0.36) // F3
 
-//     modulator.start(startTime)
-//     modulator.stop(startTime + duration + 0.05)
-//     carrier.start(startTime)
-//     carrier.stop(startTime + duration + 0.05)
+  // "-daa!" — resolving low-register chord (root position, no high octaves)
+  const tChord = now + 0.26
+  const chordDuration = 0.9
 
-//     activeNodes.push(modulator, carrier)
-//   }
+  // Sub anchor
+  const subOsc = actx.createOscillator()
+  const subGain = actx.createGain()
+  subOsc.type = 'sine'
+  subOsc.frequency.setValueAtTime(65.41, tChord) // C2
+  subGain.gain.setValueAtTime(0.001, tChord)
+  subGain.gain.linearRampToValueAtTime(0.4, tChord + 0.015)
+  subGain.gain.exponentialRampToValueAtTime(0.0001, tChord + chordDuration)
+  subOsc.connect(subGain)
+  subGain.connect(actx.destination)
+  subOsc.start(tChord)
+  subOsc.stop(tChord + chordDuration + 0.05)
+  activeNodes.push(subOsc)
 
-//   // Pre-roll silence buffer: 180ms
-//   const tStart = now + 0.18
+  // F major chord kept low: F2 / C3 / F3 / A3
+  createBrassVoice(actx, 87.31, tChord, chordDuration, 0.34)  // F2
+  createBrassVoice(actx, 130.81, tChord, chordDuration, 0.30) // C3
+  createBrassVoice(actx, 174.61, tChord, chordDuration, 0.26) // F3
+  createBrassVoice(actx, 220.00, tChord, chordDuration, 0.20) // A3
 
-//   // 1. Expressive Slide Pickup: F3 (0.18s) -> G3 (0.24s)
-//   createRhodesVoice(174.61, tStart, 0.07, 0.35, 1.0, 1.8)        // F3
-//   createRhodesVoice(196.00, tStart + 0.06, 0.10, 0.45, 1.0, 2.0) // G3
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate([20, 30, 30])
+  }
+}
 
-//   // 2. Grand Triumphant C Add9 Chord at tStart + 0.15s (now + 0.33s)
-//   const tChord = tStart + 0.15
-//   const chordDuration = 2.0
+watch(celebration, (newVal) => {
+  if (newVal) {
+    playTaDaFanfare()
+  }
+})
 
-//   // Deep Warm Sub-Bass (C2 = 65.41Hz)
-//   const subOsc = actx.createOscillator()
-//   const subGain = actx.createGain()
-//   subOsc.type = 'sine'
-//   subOsc.frequency.setValueAtTime(65.41, tChord)
-//   subGain.gain.setValueAtTime(0.001, tChord)
-//   subGain.gain.linearRampToValueAtTime(0.35, tChord + 0.015)
-//   subGain.gain.exponentialRampToValueAtTime(0.0001, tChord + 1.8)
-
-//   subOsc.connect(subGain)
-//   subGain.connect(actx.destination)
-//   subOsc.start(tChord)
-//   subOsc.stop(tChord + 1.85)
-//   activeNodes.push(subOsc)
-
-//   // Full Rich Voicing: C3 / C4 / E4 / G4 / D5
-//   createRhodesVoice(130.81, tChord, chordDuration, 0.40, 1.0, 1.5) // C3
-//   createRhodesVoice(261.63, tChord, chordDuration, 0.45, 1.0, 2.2) // C4
-//   createRhodesVoice(329.63, tChord, chordDuration, 0.38, 1.0, 2.1) // E4
-//   createRhodesVoice(392.00, tChord, chordDuration, 0.35, 1.0, 2.3) // G4
-//   createRhodesVoice(587.33, tChord, chordDuration, 0.28, 1.0, 2.5) // D5
-
-//   if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-//     navigator.vibrate([25, 40, 35])
-//   }
-// }
-
-// watch(celebration, (newVal) => {
-//   if (newVal) {
-//     playGospelRhodesChime()
-//   }
-// })
-
-// onBeforeUnmount(() => {
-//   stopActiveAudio()
-//   if (audioCtx && audioCtx.state !== 'closed') {
-//     audioCtx.close()
-//   }
-// })
+onBeforeUnmount(() => {
+  stopActiveAudio()
+  if (audioCtx && audioCtx.state !== 'closed') {
+    audioCtx.close()
+  }
+})
 </script>
 
 <template>

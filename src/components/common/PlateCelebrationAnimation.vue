@@ -147,6 +147,35 @@ function stopActiveAudio() {
   activeAudioNodes = []
 }
 
+// Simple brass-ish voice: sawtooth through a lowpass, quick punchy envelope.
+// Same voice design as the PR celebration fanfare, reused here an octave
+// lower to suit the weight of a plate drop.
+function createBrassVoice(actx, freq, startTime, duration, vol) {
+  const osc = actx.createOscillator()
+  const gain = actx.createGain()
+  const filter = actx.createBiquadFilter()
+
+  osc.type = 'sawtooth'
+  osc.frequency.setValueAtTime(freq, startTime)
+
+  filter.type = 'lowpass'
+  filter.Q.setValueAtTime(1.2, startTime)
+  filter.frequency.setValueAtTime(1400, startTime)
+  filter.frequency.exponentialRampToValueAtTime(500, startTime + duration)
+
+  gain.gain.setValueAtTime(0.001, startTime)
+  gain.gain.linearRampToValueAtTime(vol, startTime + 0.014)
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration)
+
+  osc.connect(filter)
+  filter.connect(gain)
+  gain.connect(actx.destination)
+
+  osc.start(startTime)
+  osc.stop(startTime + duration + 0.03)
+  activeAudioNodes.push(osc)
+}
+
 function playZeldaDeepSynth() {
   if (!props.soundEnabled) return
   const actx = getAudioContext()
@@ -190,65 +219,51 @@ function playZeldaDeepSynth() {
     activeAudioNodes.push(osc)
   })
 
-  // 2. Final Grand Resolution Hit (Hits precisely at t = 0.68s when plate strikes floor)
+  // Grand resolution chord, hits at plate impact
   const resolveTime = now + 0.68
+  const chordDuration = 1.6
 
-  // Deep Sub-bass 808 Boom
+  // Deep sub-bass boom under the chord
   const subOsc = actx.createOscillator()
   const subGain = actx.createGain()
   subOsc.type = 'sine'
   subOsc.frequency.setValueAtTime(45, resolveTime)
-  subOsc.frequency.exponentialRampToValueAtTime(30, resolveTime + 1.2)
-
+  subOsc.frequency.exponentialRampToValueAtTime(32, resolveTime + 1.2)
   subGain.gain.setValueAtTime(0.001, resolveTime)
-  subGain.gain.linearRampToValueAtTime(0.85, resolveTime + 0.04)
+  subGain.gain.linearRampToValueAtTime(0.8, resolveTime + 0.04)
   subGain.gain.exponentialRampToValueAtTime(0.0001, resolveTime + 1.8)
-
   subOsc.connect(subGain)
   subGain.connect(actx.destination)
   subOsc.start(resolveTime)
   subOsc.stop(resolveTime + 1.9)
   activeAudioNodes.push(subOsc)
 
-  // Full Analog Power Chord: D1 / D2 / F#2 / A2 / D3
-  const chordNotes = [
-    { freq: 36.71, detune: -0.3, vol: 0.32 }, // D1
-    { freq: 73.42, detune: 0.4, vol: 0.28 },  // D2
-    { freq: 92.50, detune: 0.0, vol: 0.24 },  // F#2 (Major 3rd)
-    { freq: 110.00, detune: -0.4, vol: 0.22 }, // A2 (5th)
-    { freq: 146.83, detune: 0.3, vol: 0.16 }  // D3
-  ]
+  // Full, wide C major chord — root through the octave above, for a
+  // bigger, brighter "triumphant" spread than a tight low voicing
+  createBrassVoice(actx, 65.41, resolveTime, chordDuration, 0.30)  // C2
+  createBrassVoice(actx, 98.00, resolveTime, chordDuration, 0.26)  // G2
+  createBrassVoice(actx, 130.81, resolveTime, chordDuration, 0.30) // C3
+  createBrassVoice(actx, 164.81, resolveTime, chordDuration, 0.24) // E3
+  createBrassVoice(actx, 196.00, resolveTime, chordDuration, 0.20) // G3
+  createBrassVoice(actx, 261.63, resolveTime, chordDuration, 0.16) // C4 — top sparkle
 
-  const chordFilter = actx.createBiquadFilter()
-  chordFilter.type = 'lowpass'
-  chordFilter.Q.setValueAtTime(2.4, resolveTime)
-  chordFilter.frequency.setValueAtTime(160, resolveTime)
-  chordFilter.frequency.linearRampToValueAtTime(480, resolveTime + 0.2)
-  chordFilter.frequency.exponentialRampToValueAtTime(90, resolveTime + 1.7)
+  // Quick bright "sting" on top, decays fast, adds the triumphant glint
+  const stingOsc = actx.createOscillator()
+  const stingGain = actx.createGain()
+  stingOsc.type = 'triangle'
+  stingOsc.frequency.setValueAtTime(523.25, resolveTime) // C5
+  stingGain.gain.setValueAtTime(0.001, resolveTime)
+  stingGain.gain.linearRampToValueAtTime(0.22, resolveTime + 0.015)
+  stingGain.gain.exponentialRampToValueAtTime(0.0001, resolveTime + 0.5)
+  stingOsc.connect(stingGain)
+  stingGain.connect(actx.destination)
+  stingOsc.start(resolveTime)
+  stingOsc.stop(resolveTime + 0.55)
+  activeAudioNodes.push(stingOsc)
 
-  const chordMasterGain = actx.createGain()
-  chordMasterGain.gain.setValueAtTime(0.001, resolveTime)
-  chordMasterGain.gain.linearRampToValueAtTime(0.9, resolveTime + 0.03)
-  chordMasterGain.gain.exponentialRampToValueAtTime(0.0001, resolveTime + 1.8)
-
-  chordFilter.connect(chordMasterGain)
-  chordMasterGain.connect(actx.destination)
-
-  chordNotes.forEach(({ freq, detune, vol }) => {
-    const osc = actx.createOscillator()
-    const voiceGain = actx.createGain()
-
-    osc.type = 'sawtooth'
-    osc.frequency.setValueAtTime(freq + detune, resolveTime)
-    voiceGain.gain.setValueAtTime(vol, resolveTime)
-
-    osc.connect(voiceGain)
-    voiceGain.connect(chordFilter)
-
-    osc.start(resolveTime)
-    osc.stop(resolveTime + 1.9)
-    activeAudioNodes.push(osc)
-  })
+  if (typeof navigator !== 'undefined' && props.hapticsEnabled && 'vibrate' in navigator) {
+    navigator.vibrate([20, 30, 40])
+  }
 }
 
 // --- Chalk Particle System ---

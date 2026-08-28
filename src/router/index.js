@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Records from '../views/records/Records.vue'
+import PRTimeline from '../views/records/PRTimeline.vue'
 import WorkoutsList from '../views/workouts/WorkoutsList.vue'
 import WorkoutEdit from '../views/workouts/WorkoutEdit.vue'
 import WorkoutDetail from '../views/workouts/WorkoutDetail.vue'
@@ -15,6 +16,7 @@ export const router = createRouter({
   routes: [
     { path: '/welcome', name: 'welcome', component: Welcome, meta: { skipGuard: true } },
     { path: '/', name: 'records', component: Records },
+    { path: '/records/:exerciseId/timeline', name: 'pr-timeline', component: PRTimeline },
     { path: '/plans', name: 'workouts', component: WorkoutsList },
     { path: '/plans/:id', name: 'plan-detail', component: WorkoutDetail },
     { path: '/plans/:id/edit', name: 'edit-plan', component: WorkoutEdit },

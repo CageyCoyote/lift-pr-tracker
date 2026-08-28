@@ -80,6 +80,12 @@ export const useRecordsStore = defineStore('records', () => {
     // under-target to at/over-target — not for every entry logged while
     // already past it. Callers use this to show a distinct celebration
     // just for the crossing, and the standard PR celebration otherwise.
+    //
+    // The crossing is also stamped onto the entry itself (goalMetTarget),
+    // not just returned to the caller — this is what lets the chart mark
+    // that exact point green permanently, even after the goal is later
+    // raised or removed. Goals aren't versioned, so the entry is the only
+    // durable record that "this lift is what hit the target at the time."
     const goalsStore = useGoalsStore()
     const goal = goalsStore.getGoal(personId, exerciseId)
     let goalJustMet = false
@@ -89,6 +95,7 @@ export const useRecordsStore = defineStore('records', () => {
         const wasUnderGoal = !previousBest || metric(previousBest) < target
         const nowAtOrOverGoal = metric(entry) >= target
         goalJustMet = wasUnderGoal && nowAtOrOverGoal
+        if (goalJustMet) entry.goalMetTarget = target
       }
     }
 

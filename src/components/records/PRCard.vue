@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import PlateBadge from '../common/PlateBadge.vue'
 import { useRecordsStore } from '../../stores/records'
 import { useExercisesStore } from '../../stores/exercises'
@@ -24,11 +25,22 @@ const props = defineProps({
 const recordsStore = useRecordsStore()
 const exercisesStore = useExercisesStore()
 const goalsStore = useGoalsStore()
+const router = useRouter()
 const { celebrateNewPr } = usePrCelebration()
 const { celebrateGoalMet } = useGoalCelebration()
 const { showUndoToast } = useUndoToast()
 const expanded = ref(false)
 const viewMode = ref('chart') // 'log' | 'chart'
+
+// Inline card chart stays light — only the most recent N points. The
+// full-page timeline (routed) gets the complete, untruncated history.
+const CHART_PREVIEW_LIMIT = 10
+const chartPreviewHistory = computed(() => history().slice(0, CHART_PREVIEW_LIMIT))
+const logPreviewHistory = computed(() => history().slice(0, CHART_PREVIEW_LIMIT))
+
+function openFullTimeline() {
+  router.push({ name: 'pr-timeline', params: { exerciseId: props.exerciseId } })
+}
 
 const bestOneRm = computed(() =>
   estimateOneRepMax(props.best.weight, props.best.reps, props.best.unit)
@@ -327,19 +339,38 @@ function resetSwipe(id = activeSwipeId) {
           </svg>
         </button>
 
-        <button v-if="viewMode === 'chart' && props.personId" class="action-btn goal-btn"
-          @click="openGoalForm()" aria-label="Set goal">
-          <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" />
-          </svg>
-        </button>
+        <div v-if="viewMode === 'chart' && props.personId" class="chart-actions">
+          <button v-if="history().length > CHART_PREVIEW_LIMIT"
+            class="action-btn expand-chart-btn" @click="openFullTimeline" aria-label="View full history">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+              <path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            </svg>
+          </button>
+
+          <button class="action-btn goal-btn" @click="openGoalForm()" aria-label="Set goal">
+            <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <PRChart v-if="viewMode === 'chart'" :history="history()" :goal-target="goal ? goalsStore.targetMetric(goal) : null" />
+      <PRChart v-if="viewMode === 'chart'" :history="chartPreviewHistory" :goal-target="goal ? goalsStore.targetMetric(goal) : null" />
+      <button v-if="viewMode === 'chart' && history().length > CHART_PREVIEW_LIMIT" class="chart-truncated-note" @click="openFullTimeline">
+        Showing last {{ CHART_PREVIEW_LIMIT }} of {{ history().length }} — tap
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round" class="inline-icon">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+          <path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+        </svg>
+        to see the full timeline.
+      </button>
 
       <template v-else>
-        <div v-for="h in history()" :key="h.id" class="history-row-wrap">
+        <div v-for="h in logPreviewHistory" :key="h.id" class="history-row-wrap">
           <div class="swipe-hint" :style="{ opacity: swipeHintOpacity(h.id) }" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
               stroke-linecap="round" stroke-linejoin="round">
@@ -373,6 +404,16 @@ function resetSwipe(id = activeSwipeId) {
             <button class="action-btn remove-btn" @click="remove(h.id)" aria-label="Delete entry">×</button>
           </div>
         </div>
+
+        <button v-if="history().length > CHART_PREVIEW_LIMIT" class="chart-truncated-note" @click="openFullTimeline">
+          Showing last {{ CHART_PREVIEW_LIMIT }} of {{ history().length }} — tap
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+            stroke-linecap="round" stroke-linejoin="round" class="inline-icon">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+            <path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+          </svg>
+          to see the full log.
+        </button>
       </template>
     </div>
 
@@ -596,9 +637,51 @@ button.action-btn.goal-btn{
 }
 
 .edit-btn,
-.goal-btn {
+.chart-actions {
   grid-column: 3;
   justify-self: end;
+}
+
+.chart-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.expand-chart-btn {
+  color: var(--color-steel);
+}
+
+.expand-chart-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+}
+
+.chart-truncated-note {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  width: 100%;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--color-text-dim);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 4px 0 0;
+  text-align: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.chart-truncated-note:hover {
+  color: var(--color-text);
+}
+
+.chart-truncated-note .inline-icon {
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .toggle-btn {

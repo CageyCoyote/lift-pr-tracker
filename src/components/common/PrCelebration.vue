@@ -1,8 +1,10 @@
 <script setup>
 import { computed, watch, onBeforeUnmount } from 'vue'
 import { usePrCelebration } from '../../composables/usePrCelebration'
+import { useSettingsStore } from '../../stores/settings'
 
 const { celebration, dismissCelebration } = usePrCelebration()
+const settingsStore = useSettingsStore()
 
 // A handful of confetti pieces with randomized fall paths. Regenerated
 // each time a celebration fires (keyed below) so the burst never repeats
@@ -93,6 +95,7 @@ function createBrassVoice(actx, freq, startTime, duration, vol) {
 }
 
 function playTaDaFanfare() {
+  if (!settingsStore.soundEnabled) return
   const actx = getAudioContext()
   if (!actx) return
 

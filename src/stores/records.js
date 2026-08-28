@@ -60,7 +60,7 @@ export const useRecordsStore = defineStore('records', () => {
       exerciseId,
       exerciseName: exName,
       weight: Number(weight),
-      reps: Number(reps) || 1,
+      reps: reps === 0 || reps === '0' ? 0 : Number(reps) || 1,
       unit: unit || 'lb',
       date: date || new Date().toISOString().slice(0, 10),
       ...(importedFrom ? { importedFrom } : {}),

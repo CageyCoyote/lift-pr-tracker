@@ -1,9 +1,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useGoalCelebration } from '../../composables/useGoalCelebration'
+import { useSettingsStore } from '../../stores/settings'
 import PlateCelebrationAnimation from './PlateCelebrationAnimation.vue'
 
 const { celebration, dismissGoalCelebration } = useGoalCelebration()
+const settingsStore = useSettingsStore()
 
 const summary = computed(() => {
   const c = celebration.value
@@ -17,7 +19,7 @@ const summary = computed(() => {
 <template>
   <Transition name="goal-pop">
     <div v-if="celebration" class="goal-celebration" role="status" @click="dismissGoalCelebration">
-      <PlateCelebrationAnimation v-if="celebration" :subtitle="summary" />
+      <PlateCelebrationAnimation v-if="celebration" :subtitle="summary" :sound-enabled="settingsStore.soundEnabled" />
     </div>
   </Transition>
 </template>

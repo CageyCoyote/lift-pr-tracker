@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 import AccountSection from '../../components/account/AccountSection.vue'
 import ThemePicker from '../../components/account/ThemePicker.vue'
 import IconColorPicker from '../../components/account/IconColorPicker.vue'
+import SoundSettings from '../../components/account/SoundSettings.vue'
 import InstallSection from '../../components/account/InstallSection.vue'
 import DataExport from '../../components/account/DataExport.vue'
 import BackupRestore from '../../components/account/BackupRestore.vue'
@@ -21,6 +22,7 @@ const router = useRouter()
     <AccountSection />
     <ThemePicker />
     <IconColorPicker />
+    <SoundSettings />
     <InstallSection />
     <DataExport />
     <BackupRestore />

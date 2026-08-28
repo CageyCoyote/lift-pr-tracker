@@ -23,12 +23,16 @@ export const useSettingsStore = defineStore('settings', () => {
   // Map of personId → hex. Persisted as a single IDB key.
   const personIconColors = ref(load('settings.personIconColors', {}))
   const theme = ref(load('settings.theme', 'steel'))
+  // Controls the celebration sounds (PR toast fanfare + goal/plate
+  // celebration chord). Haptics are unaffected — this is audio only.
+  const soundEnabled = ref(load('settings.soundEnabled', true))
 
   watch(personIconColors, (v) => save('settings.personIconColors', v), { deep: true })
   watch(theme, (v) => {
     save('settings.theme', v)
     document.documentElement.setAttribute('data-theme', v)
   })
+  watch(soundEnabled, (v) => save('settings.soundEnabled', v))
 
   function getIconColor(personId) {
     if (!personId) return DEFAULT_COLOR
@@ -58,6 +62,10 @@ export const useSettingsStore = defineStore('settings', () => {
     theme.value = t
   }
 
+  function setSoundEnabled(v) {
+    soundEnabled.value = v
+  }
+
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', theme.value)
   }
@@ -65,11 +73,13 @@ export const useSettingsStore = defineStore('settings', () => {
   return {
     personIconColors,
     theme,
+    soundEnabled,
     getIconColor,
     setIconColor,
     clearIconColor,
     effectiveIconColor,
     setTheme,
+    setSoundEnabled,
     applyTheme,
   }
 })

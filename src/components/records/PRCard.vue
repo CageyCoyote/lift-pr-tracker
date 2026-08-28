@@ -536,7 +536,9 @@ function resetSwipe(id = activeSwipeId) {
   align-items: center;
   justify-content: center;
 }
-
+button.action-btn.goal-btn{
+  padding: 0;
+}
 .edit-btn,
 .goal-btn {
   color: var(--color-steel);

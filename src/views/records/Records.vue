@@ -5,9 +5,11 @@ import PersonSelector from '../../components/common/PersonSelector.vue'
 import PRCard from '../../components/records/PRCard.vue'
 import PRSearchForm from '../../components/records/PRSearchForm.vue'
 import PRShareSheet from '../../components/records/PRShareSheet.vue'
+import GoalNewForm from '../../components/records/GoalNewForm.vue'
 import { useCurrentUser } from "../../composables/useCurrentUser.js"
 import { usePrCelebration } from '../../composables/usePrCelebration'
 import { useGoalCelebration } from '../../composables/useGoalCelebration'
+import { useGoalsStore } from '../../stores/goals'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -24,11 +26,13 @@ onMounted(() => {
 })
 
 const recordsStore = useRecordsStore()
+const goalsStore = useGoalsStore()
 const { userId } = useCurrentUser()
 const { celebrateNewPr } = usePrCelebration()
 const { celebrateGoalMet } = useGoalCelebration()
 const formOpen = ref(false)
 const importSheetOpen = ref(false)
+const goalFormOpen = ref(false)
 
 const sortBy = ref('date')
 
@@ -66,6 +70,21 @@ function handleSaved(payload) {
   if (goalJustMet) celebrateGoalMet(entry)
   else if (isNewBest) celebrateNewPr(entry)
 }
+
+// Starting a goal from scratch also needs a PR to track it against, so
+// this creates a placeholder entry at 0 for the chosen exercise before
+// setting the goal itself. No celebration here — 0 is never a new best.
+function handleGoalSaved({ exerciseId, exerciseName, unit, targetWeight, targetReps }) {
+  recordsStore.addEntry({
+    personId: userId.value,
+    exerciseId,
+    exerciseName,
+    unit,
+    weight: 0,
+    reps: 0
+  })
+  goalsStore.setGoal({ personId: userId.value, exerciseId, unit, targetWeight, targetReps })
+}
 </script>
 
 <template>
@@ -83,7 +102,7 @@ function handleSaved(payload) {
 
     <template v-else>
       <div v-if="bests.length === 0" class="empty-state">
-        No PRs logged yet for this person. Tap "Log a PR" to add the first one.
+        <p>No PRs logged yet for this person. Log a PR, or set a goal to start tracking toward it.</p>
       </div>
       <template v-else>
         <div class="list-controls">
@@ -98,12 +117,18 @@ function handleSaved(payload) {
             :best="b.best" />
         </div>
       </template>
-
-      <button class="btn btn-accent fab" @click="formOpen = true">+ Log a PR</button>
+      <div class="action-btns" :class="bests.length > 0 ?'wide-buttons' :''">
+        <button class="btn btn-accent" @click="formOpen = true">+ Log a PR</button>
+        <button class="btn" @click="goalFormOpen = true">+ Add a Goal</button>
+      </div>
+      <!-- <button class="btn btn-accent fab" @click="formOpen = true">+ Log a PR</button> -->
     </template>
 
     <!-- search the library for a new PR -->
     <PRSearchForm v-model="formOpen" :person-id="userId" @saved="handleSaved" />
+
+    <!-- set a goal for an exercise, starting a 0 PR to track it against -->
+    <GoalNewForm v-model="goalFormOpen" :person-id="userId" @saved="handleGoalSaved" />
 
     <!-- import a PR shared from another device -->
     <PRShareSheet v-model="importSheetOpen" :incoming-code="incomingCode" @imported="incomingCode = null" />
@@ -157,6 +182,15 @@ function handleSaved(payload) {
   width: auto;
 }
 
+.action-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  justify-content: center;
+}
+.action-btns.wide-buttons > button {
+  width: 50%;
+}
 .card-list {
   display: flex;
   flex-direction: column;

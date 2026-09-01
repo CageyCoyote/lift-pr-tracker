@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps({
   // Expects entries sorted newest-first, same shape as recordsStore.historyFor()
@@ -23,11 +23,32 @@ function metricFor(entry) {
   return entry.unit === 'bodyweight' ? entry.reps : entry.weight
 }
 
-const W = 300
+// The viewBox width tracks the actual rendered pixel width of the chart
+// (via ResizeObserver below) so the viewBox always maps 1:1 to on-screen
+// pixels. Without this, preserveAspectRatio="none" stretches everything
+// — including text glyphs — non-uniformly whenever the container's aspect
+// ratio doesn't match the fixed 300x{height} viewBox, which is exactly
+// what happens on a wide/landscape timeline page.
+const chartWrapEl = ref(null)
+const W = ref(300)
 const H = computed(() => props.height)
 const PAD_X = 8
 const PAD_TOP = 16
 const PAD_BOTTOM = 24
+
+let resizeObserver = null
+onMounted(() => {
+  if (chartWrapEl.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect?.width
+      if (w && w > 0) W.value = Math.round(w)
+    })
+    resizeObserver.observe(chartWrapEl.value)
+  }
+})
+onBeforeUnmount(() => {
+  if (resizeObserver) resizeObserver.disconnect()
+})
 
 const values = computed(() => points.value.map(metricFor))
 // The goal line needs to fit on the same scale as the plotted values, so a
@@ -42,10 +63,10 @@ const range = computed(() => (maxVal.value - minVal.value) || 1)
 const coords = computed(() => {
   const n = points.value.length
   if (n === 0) return []
-  const usableW = W - PAD_X * 2
+  const usableW = W.value - PAD_X * 2
   const usableH = H.value - PAD_TOP - PAD_BOTTOM
   return points.value.map((entry, i) => {
-    const x = n === 1 ? W / 2 : PAD_X + (usableW * i) / (n - 1)
+    const x = n === 1 ? W.value / 2 : PAD_X + (usableW * i) / (n - 1)
     const v = metricFor(entry)
     const y = PAD_TOP + usableH - ((v - minVal.value) / range.value) * usableH
     return { x, y, entry }
@@ -130,7 +151,7 @@ const tooltipText = computed(() => {
     <div v-if="points.length < 2" class="chart-empty">
       Log at least 2 entries to see a trend.
     </div>
-    <div v-else class="chart-svg-wrap">
+    <div v-else class="chart-svg-wrap" ref="chartWrapEl">
       <svg :viewBox="`0 0 ${W} ${H}`" class="chart-svg" :style="{ height: `${height}px` }" preserveAspectRatio="none">
         <path :d="areaPath" class="area" />
         <line

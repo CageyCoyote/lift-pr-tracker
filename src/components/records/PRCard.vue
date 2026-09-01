@@ -282,17 +282,9 @@ function resetSwipe(id = activeSwipeId) {
 
 <template>
   <div class="card">
-    <button
-      class="card-top"
-      :class="{ pressing: badgePressing }"
-      @click="handleCardTopClick"
-      @pointerdown="startLongPress"
-      @pointermove="moveDuringPress"
-      @pointerup="cancelLongPress"
-      @pointerleave="cancelLongPress"
-      @pointercancel="cancelLongPress"
-      @contextmenu.prevent
-    >
+    <button class="card-top" :class="{ pressing: badgePressing }" @click="handleCardTopClick"
+      @pointerdown="startLongPress" @pointermove="moveDuringPress" @pointerup="cancelLongPress"
+      @pointerleave="cancelLongPress" @pointercancel="cancelLongPress" @contextmenu.prevent>
       <div class="card-top-row">
         <PlateBadge v-if="best.unit === 'bodyweight'" :weight="best.reps" unit="reps" :progress="goalProgress" />
         <PlateBadge v-else :weight="best.weight" :unit="best.unit" :progress="goalProgress" />
@@ -314,20 +306,10 @@ function resetSwipe(id = activeSwipeId) {
         <button v-if="props.personId" class="btn log-btn" @click="openLog()">+ New PR</button>
 
         <div class="view-toggle" role="tablist" aria-label="View mode">
-          <button
-            class="toggle-btn"
-            role="tab"
-            :aria-selected="viewMode === 'log'"
-            :class="{ active: viewMode === 'log' }"
-            @click="viewMode = 'log'"
-          >Log</button>
-          <button
-            class="toggle-btn"
-            role="tab"
-            :aria-selected="viewMode === 'chart'"
-            :class="{ active: viewMode === 'chart' }"
-            @click="viewMode = 'chart'"
-          >Chart</button>
+          <button class="toggle-btn" role="tab" :aria-selected="viewMode === 'log'"
+            :class="{ active: viewMode === 'log' }" @click="viewMode = 'log'">Log</button>
+          <button class="toggle-btn" role="tab" :aria-selected="viewMode === 'chart'"
+            :class="{ active: viewMode === 'chart' }" @click="viewMode = 'chart'">Chart</button>
         </div>
 
         <button v-if="viewMode === 'log' && props.personId && history().length" class="action-btn edit-btn"
@@ -340,36 +322,32 @@ function resetSwipe(id = activeSwipeId) {
         </button>
 
         <div v-if="viewMode === 'chart' && props.personId" class="chart-actions">
-          <button v-if="history().length > CHART_PREVIEW_LIMIT"
-            class="action-btn expand-chart-btn" @click="openFullTimeline" aria-label="View full history">
+          <button class="action-btn expand-chart-btn"
+            @click="openFullTimeline" aria-label="View full history">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
               stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" />
-              <path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+              <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+              <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+              <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+              <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
             </svg>
           </button>
 
           <button class="action-btn goal-btn" @click="openGoalForm()" aria-label="Set goal">
             <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
               stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" />
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="5" />
+              <circle cx="12" cy="12" r="1" />
             </svg>
           </button>
         </div>
       </div>
 
-      <PRChart v-if="viewMode === 'chart'" :history="chartPreviewHistory" :goal-target="goal ? goalsStore.targetMetric(goal) : null" />
-      <button v-if="viewMode === 'chart' && history().length > CHART_PREVIEW_LIMIT" class="chart-truncated-note" @click="openFullTimeline">
-        Showing last {{ CHART_PREVIEW_LIMIT }} of {{ history().length }} — tap
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
-          stroke-linecap="round" stroke-linejoin="round" class="inline-icon">
-          <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" />
-          <path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
-        </svg>
-        to see the full timeline.
-      </button>
+      <PRChart v-if="viewMode === 'chart'" :history="chartPreviewHistory"
+        :goal-target="goal ? goalsStore.targetMetric(goal) : null" />
 
-      <template v-else>
+      <template v-if="viewMode === 'log'">
         <div v-for="h in logPreviewHistory" :key="h.id" class="history-row-wrap">
           <div class="swipe-hint" :style="{ opacity: swipeHintOpacity(h.id) }" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -378,15 +356,9 @@ function resetSwipe(id = activeSwipeId) {
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
           </div>
-          <div
-            class="history-row"
-            :style="swipeStyle(h.id)"
-            @pointerdown="startSwipe($event, h)"
-            @pointermove="moveSwipe"
-            @pointerup="endSwipe(h)"
-            @pointerleave="resetSwipe(h.id)"
-            @pointercancel="resetSwipe(h.id)"
-          >
+          <div class="history-row" :style="swipeStyle(h.id)" @pointerdown="startSwipe($event, h)"
+            @pointermove="moveSwipe" @pointerup="endSwipe(h)" @pointerleave="resetSwipe(h.id)"
+            @pointercancel="resetSwipe(h.id)">
             <span class="history-text">
               <template v-if="h.unit === 'bodyweight'">{{ h.reps }} reps (bodyweight) — {{ h.date }}</template>
               <template v-else>
@@ -397,8 +369,11 @@ function resetSwipe(id = activeSwipeId) {
             <button class="action-btn share-btn" @click="openShare(h)" aria-label="Share this PR">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                 stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
               </svg>
             </button>
             <button class="action-btn remove-btn" @click="remove(h.id)" aria-label="Delete entry">×</button>
@@ -409,8 +384,10 @@ function resetSwipe(id = activeSwipeId) {
           Showing last {{ CHART_PREVIEW_LIMIT }} of {{ history().length }} — tap
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
             stroke-linecap="round" stroke-linejoin="round" class="inline-icon">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" />
-            <path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+            <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+            <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+            <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
           </svg>
           to see the full log.
         </button>
@@ -428,14 +405,8 @@ function resetSwipe(id = activeSwipeId) {
     <PRShareSheet v-model="shareSheetOpen" :entry="shareEntry" :person-id="props.personId" />
 
     <!-- Set/Edit/Remove the Goal for this PR -->
-    <GoalForm
-      v-model="goalFormOpen"
-      :exercise-name="best.exerciseName"
-      :unit="best.unit"
-      :initial-goal="goal"
-      @saved="handleGoalSaved"
-      @removed="handleGoalRemoved"
-    />
+    <GoalForm v-model="goalFormOpen" :exercise-name="best.exerciseName" :unit="best.unit" :initial-goal="goal"
+      @saved="handleGoalSaved" @removed="handleGoalRemoved" />
   </div>
 </template>
 
@@ -577,9 +548,11 @@ function resetSwipe(id = activeSwipeId) {
   align-items: center;
   justify-content: center;
 }
-button.action-btn.goal-btn{
+
+button.action-btn.goal-btn {
   padding: 0;
 }
+
 .edit-btn,
 .goal-btn {
   color: var(--color-steel);

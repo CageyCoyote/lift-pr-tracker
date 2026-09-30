@@ -185,6 +185,12 @@ a:focus-visible {
 .color-green {
   color: var(--color-green);
 }
+.bold {
+  font-weight: bold;
+}
+.bolder {
+  font-weight: bolder;
+}
 /* ═══════════════════════════════════════════════════════════════════════════
     SHARED COMPONENT UTILITIES
     Patterns repeated verbatim across 4+ unrelated files.

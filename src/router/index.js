@@ -9,6 +9,11 @@ import ExerciseLibrary from '../views/library/ExerciseLibrary.vue'
 import ExerciseDetail from '../views/library/ExerciseDetail.vue'
 import Account from '../views/account/Account.vue'
 import Welcome from '../views/account/Welcome.vue'
+import SelectCalc from '../views/calculators/SelectCalc.vue'
+import OneRepMax from '../views/calculators/OneRepMax.vue'
+import PlateMath from '../views/calculators/PlateMath.vue'
+import Converter from '../views/calculators/Converter.vue'
+import WorkingLoadTable from '../views/calculators/WorkingLoadTable.vue'
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.VITE_BASE_URL || ''),
@@ -21,6 +26,11 @@ export const router = createRouter({
     { path: '/plans/:id', name: 'plan-detail', component: WorkoutDetail },
     { path: '/plans/:id/edit', name: 'edit-plan', component: WorkoutEdit },
     { path: '/people', name: 'people', component: People },
+    { path: '/calculators', name: 'calcs', component: SelectCalc,  meta: { skipGuard: true } },
+    { path: '/calculators/1repmax', name: '1repmax', component: OneRepMax,  meta: { skipGuard: true } },
+    { path: '/calculators/platemath', name: 'platemath', component: PlateMath,  meta: { skipGuard: true } },
+    { path: '/calculators/lbsconverter', name: 'lbsconverter', component: Converter,  meta: { skipGuard: true } },
+    { path: '/calculators/workingloadtable', name: 'workingloadtable', component: WorkingLoadTable,  meta: { skipGuard: true } },
     { path: '/library', name: 'library', component: ExerciseLibrary },
     { path: '/library/:id', name: 'exercise-detail', component: ExerciseDetail },
     { path: '/account', name: 'account', component: Account },

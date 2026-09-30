@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 const router = useRouter()
-const oneRm = ref(225)
+const oneRm = ref(0)
 
 const UNITS = ['lb', 'kg']
 const unit = ref('lb')
@@ -36,6 +36,7 @@ const table = computed(() =>
     }
   })
 )
+const selectedRow = ref('')
 </script>
 
 <template>
@@ -48,7 +49,7 @@ const table = computed(() =>
         </div>
       </div>
     </header>
-    <div>
+    <div class="form">
       <label>
         1RM:
         <input class="one-rep-input" v-model.number="oneRm" type="number" min="0" />
@@ -56,20 +57,21 @@ const table = computed(() =>
       <select v-model="unit">
         <option v-for="u in UNITS" :key="u" :value="u">{{ u }}</option>
       </select>
+    </div>
 
-      <table>
+    <div>
+      <table class="the-table">
         <thead>
           <tr>
             <th>%1RM</th>
-            <th>Weight</th>
-            <th v-for="r in REPS" :key="r">× {{ r }}</th>
+            <th class="weight-tltle">Weight</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="row in table" :key="row.pct">
-            <td>{{ row.pct }}%</td>
-            <td>{{ row.weight }} {{ unit }}</td>
-            <td v-for="c in row.reps" :key="c.reps">{{ c.volume }}</td>
+          <tr v-for="row in table" :key="row.pct" :class="{ highlight: selectedRow === row.pct }"
+            @click="selectedRow = row.pct === selectedRow ? '' : row.pct">
+            <td class="pct">{{ row.pct }}%</td>
+            <td class="weight">{{ row.weight }} {{ unit }}</td>
           </tr>
         </tbody>
       </table>
@@ -77,5 +79,39 @@ const table = computed(() =>
   </div>
 </template>
 <style scoped>
-.one-rep-input { width: 55%;}
+.one-rep-input {
+  width: 55%;
+}
+.form{
+  margin: 10px 0;
+}
+.form >label{
+  margin-right: 10px;
+}
+.the-table {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  margin-top:15px;
+}
+thead{
+  background-color: var(--color-surface-2);
+}
+.weight-tltle{
+  text-align: start;
+}
+td.pct{
+  text-align: center;
+}
+/* .the-table>tbody tr:nth-child(even) {
+  background-color: var(--color-surface-2);
+} */
+
+.highlight {
+  background-color: var(--color-accent);
+  color: var();
+}
+
+/* .the-table>tbody tr:hover{
+  background-color: var(--color-surface);
+} */
 </style>

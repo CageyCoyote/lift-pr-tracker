@@ -31,22 +31,56 @@ const reset = () => {
         </div>
       </div>
     </header>
-    <div>
-      <span>Estimated 1 Rep Max: <span class="color-steel bolder" v-if="max">{{ `${max} lbs` }}</span></span>
-    </div>
-    <div>
-      <div>
-        <label for="weight">weight</label>
-        <input name="weight" v-model="weight" type="number" min="0" step="0.5">
+    <div class="calc-form">
+      <div class="max-result">
+        <span>Estimated 1 Rep Max: <span class="color-green bolder larger" v-if="max">{{ `${max} lbs` }}</span></span>
       </div>
       <div>
-        <label for="reps">reps</label>
-        <input name="reps" v-model="reps" type="number" min="0" step="0.5">
+        <div class="form-line">
+          <label for="weight" class="label-left">Weight:</label>
+          <input name="weight" v-model="weight" type="number" min="0" step="0.5">
+        </div>
+        <div class="form-line">
+          <label for="reps" class="label-left">Reps: </label>
+          <input name="reps" v-model="reps" type="number" min="0" step="0.5">
+        </div>
+        <div class="btn-group">
+          <div class="spacer"></div>
+          <button class="btn btn-clear" @click="reset">Clear</button>
+          <button class="btn btn-accent" @click="bestOneRm">Estimate</button>
+        </div>
       </div>
-      <button class="btn btn-accent" @click="bestOneRm">Estimate</button>
-      <button class="btn " @click="reset">Clear</button>
     </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.max-result {
+  margin-bottom: 15px;
+}
+
+.calc-form {
+  margin-top: 15px;
+}
+
+.form-line {
+  margin: 5px 0;
+}
+
+.label-left {
+  display: inline-block;
+  width: 65px;
+}
+
+
+.btn-group {
+  display: flex;
+  margin-top: 10px;
+}
+.btn-group>div.spacer {
+  width: 65px;
+}
+.btn-clear{
+  margin-right: 65px;
+}
+</style>

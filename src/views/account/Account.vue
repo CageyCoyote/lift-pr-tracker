@@ -7,8 +7,10 @@ import SoundSettings from '../../components/account/SoundSettings.vue'
 import InstallSection from '../../components/account/InstallSection.vue'
 import DataExport from '../../components/account/DataExport.vue'
 import BackupRestore from '../../components/account/BackupRestore.vue'
+import { useCurrentUser } from '../../composables/useCurrentUser.js'
 
 const router = useRouter()
+const { userId, activeUser } = useCurrentUser()
 </script>
 
 <template>
@@ -19,9 +21,11 @@ const router = useRouter()
       <h1>Preferences</h1>
     </header>
 
-    <AccountSection />
+    <AccountSection v-if="activeUser" />
+    <!-- <InactiveSection heading="" message="" v-else /> -->
     <ThemePicker />
-    <IconColorPicker />
+    <IconColorPicker v-if="activeUser" />
+    <!-- <InactiveSection heading="" message="" v-else /> -->
     <SoundSettings />
     <InstallSection />
     <DataExport />

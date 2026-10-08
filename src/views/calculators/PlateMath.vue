@@ -1,14 +1,28 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-const router = useRouter()
-const PLATES = [2.5, 5, 10, 25, 35, 45, 50, 100]
 
-const BAR_PRESETS = [
+const router = useRouter()
+const PLATES = [2.5, 5, 10, 25, 35, 45, 55, 100]
+const KG_PLATES = [0.5, 1, 1.5, 2, 2.5, 5, 10, 15, 20, 25]
+// red: 25 kg
+// Blue: 20 kg
+// Yellow: 15 kg
+// Green: 10 kg
+// White: 5 kg
+
+const LBS_BAR_PRESETS = [
   { label: '45 lb', value: 45 },
   { label: '35 lb', value: 35 },
 ]
 
+const KG_BAR_PRESETS = [
+  { label: '20 kg', value: 20 },
+  { label: '15 kg', value: 15 },
+]
+
+const weightUnit = ref('lbs') // 'lbs' or 'kg'
+const BAR_PRESETS = ref(LBS_BAR_PRESETS)
 const barWeight = ref(45)
 const editingBar = ref(false)
 const barInput = ref(45)
@@ -57,9 +71,25 @@ const total = computed(() =>
 
 const breakdown = computed(() =>
   doubled.value
-    ? `${barWeight.value} bar + ${sideTotal.value} × 2`
+    ? `${barWeight.value} bar + ( ${sideTotal.value} × 2 )`
     : `${barWeight.value} bar + ${sideTotal.value} plates`
 )
+
+const toggleUnits = () => {
+  if (weightUnit.value === 'lbs') {
+    weightUnit.value = 'kg'
+    BAR_PRESETS.value = KG_BAR_PRESETS
+    barWeight.value = 20
+    barInput.value = 20
+    sidePlates.value = []
+  } else {
+    weightUnit.value = 'lbs'
+    BAR_PRESETS.value = LBS_BAR_PRESETS
+    barWeight.value = 45
+    barInput.value = 45
+    sidePlates.value = []
+  }
+}
 </script>
 
 <template>
@@ -67,24 +97,30 @@ const breakdown = computed(() =>
     <button class="back-link" @click="router.back()">← Calculators</button>
     <header class="page-header">
       <h1>Plate Math</h1>
+<!--       
+      <div class="unit-toggle" @click="toggleUnits">
+        <span class="unit-selected" :class="{active: weightUnit === 'lbs'}">Lbs</span>
+        <span class="seperator">|</span>
+        <span class="unit-selected" :class="{active: weightUnit === 'kg'}">Kg</span>
+      </div> -->
     </header>
 
     <div class="result" aria-live="polite">
       <span class="eyebrow">Total</span>
-      <div class="result-value">{{ total }}<span class="result-unit">lbs</span></div>
+      <div class="result-value">{{ total }}<span class="result-unit">{{ weightUnit }}</span></div>
       <span class="result-breakdown">{{ breakdown }}</span>
     </div>
 
     <section class="block">
-      <span class="eyebrow">Tap to add · one side</span>
-      <div class="plate-grid">
-        <button
-          v-for="p in PLATES"
-          :key="p"
-          class="round-plate"
-          :aria-label="`Add ${p} lb plate`"
-          @click="addPlate(p)"
-        >
+      <span class="eyebrow">Tap to add</span>
+      <div class="plate-grid" v-if="weightUnit === 'lbs'">
+        <button v-for="p in PLATES" :key="p" class="round-plate" :aria-label="`Add ${p} lb plate`" @click="addPlate(p)">
+          {{ p }}
+        </button>
+      </div>
+      <div class="plate-grid" v-else>
+        <button v-for="p in KG_PLATES" :key="p" class="round-plate" :aria-label="`Add ${p} kg plate`"
+          @click="addPlate(p)">
           {{ p }}
         </button>
       </div>
@@ -95,11 +131,14 @@ const breakdown = computed(() =>
         <span class="eyebrow">On the bar</span>
         <div class="btn-group">
           <button class="btn btn-sm" :disabled="!sidePlates.length" @click="removeLast">Undo</button>
-          <button class="btn btn-sm btn-danger" :disabled="!sidePlates.length && !doubled" @click="clearAll">Clear</button>
+          <button class="btn btn-sm btn-danger" :disabled="!sidePlates.length && !doubled"
+            @click="clearAll">Clear</button>
         </div>
       </div>
       <div class="chip-row">
-        <span v-for="(p, i) in sidePlates" :key="i" class="plate-chip">{{ p }}</span>
+        <span v-for="(p, i) in sidePlates" :key="i" class="plate-chip" :class="`plate-${p}-${weightUnit}`">
+          {{ p }}
+        </span>
         <span v-if="!sidePlates.length" class="empty-hint">No plates added yet</span>
       </div>
     </section>
@@ -109,7 +148,7 @@ const breakdown = computed(() =>
         <div v-if="!editingBar" class="bar-row">
           <span class="eyebrow">Bar</span>
           <div class="bar-value-wrap">
-            <strong class="bar-value">{{ barWeight }} lb</strong>
+            <strong class="bar-value">{{ barWeight }} {{ weightUnit }}</strong>
             <button class="icon-btn" aria-label="Edit bar weight" @click="editBar">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -122,13 +161,8 @@ const breakdown = computed(() =>
         <div v-else class="bar-edit">
           <span class="eyebrow">Bar weight</span>
           <div class="chip-row">
-            <button
-              v-for="b in BAR_PRESETS"
-              :key="b.value"
-              class="chip"
-              :class="{ active: Number(barInput) === b.value }"
-              @click="barInput = b.value"
-            >
+            <button v-for="b in BAR_PRESETS" :key="b.value" class="chip"
+              :class="{ active: Number(barInput) === b.value }" @click="barInput = b.value">
               {{ b.label }}
             </button>
           </div>
@@ -165,6 +199,22 @@ const breakdown = computed(() =>
   margin-top: 2px;
 }
 
+.unit-toggle {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.unit-selected {
+  background-color: var(--color-surface-2);
+  border-radius: 10px;
+}
+.unit-selected.active{
+  color: var(--color-accent);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
 /* ── Result ── */
 .result {
   display: flex;
@@ -291,8 +341,69 @@ const breakdown = computed(() =>
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 999px;
+  background: color-mix(in srgb, var(--color-steel) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-steel) 38%, transparent);
+  color: var(--color-text);
+}
+
+.plate-55-lbs {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 38%, transparent);
+  color: var(--color-text);
+}
+
+.plate-45-lbs {
+  background: color-mix(in srgb, #4180d4 12%, transparent);
+  border: 1px solid color-mix(in srgb, #4180d4 38%, transparent);
+  color: var(--color-text);
+}
+
+.plate-35-lbs {
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 38%, transparent);
+  color: var(--color-text);
+}
+
+.plate-25-lbs {
+  background: color-mix(in srgb, var(--color-green) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-green) 38%, transparent);
+  color: var(--color-text);
+}
+
+.plate-10-lbs {
+  background: color-mix(in srgb, var(--color-chalk) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text) 38%, transparent);
+  color: var(--color-text);
+}
+
+/* Kilograms */
+.plate-25-kg {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 38%, transparent);
+  color: var(--color-text);
+}
+
+.plate-20-kg {
+  background: color-mix(in srgb, #4180d4 12%, transparent);
+  border: 1px solid color-mix(in srgb, #4180d4 38%, transparent);
+  color: var(--color-text);
+}
+
+.plate-15-kg {
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 38%, transparent);
+  color: var(--color-text);
+}
+
+.plate-10-kg {
+  background: color-mix(in srgb, var(--color-green) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-green) 38%, transparent);
+  color: var(--color-text);
+}
+
+.plate-5-kg {
+  background: color-mix(in srgb, var(--color-chalk) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text) 38%, transparent);
   color: var(--color-text);
 }
 

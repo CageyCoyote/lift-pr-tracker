@@ -5,11 +5,6 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const PLATES = [2.5, 5, 10, 25, 35, 45, 55, 100]
 const KG_PLATES = [0.5, 1, 1.5, 2, 2.5, 5, 10, 15, 20, 25]
-// red: 25 kg
-// Blue: 20 kg
-// Yellow: 15 kg
-// Green: 10 kg
-// White: 5 kg
 
 const LBS_BAR_PRESETS = [
   { label: '45 lb', value: 45 },
@@ -97,12 +92,13 @@ const toggleUnits = () => {
     <button class="back-link" @click="router.back()">← Calculators</button>
     <header class="page-header">
       <h1>Plate Math</h1>
-<!--       
+      <!--             
       <div class="unit-toggle" @click="toggleUnits">
         <span class="unit-selected" :class="{active: weightUnit === 'lbs'}">Lbs</span>
         <span class="seperator">|</span>
         <span class="unit-selected" :class="{active: weightUnit === 'kg'}">Kg</span>
-      </div> -->
+      </div>
+      -->
     </header>
 
     <div class="result" aria-live="polite">
@@ -207,14 +203,15 @@ const toggleUnits = () => {
   align-items: center;
 }
 
-.unit-selected {
+/* .unit-selected {
   background-color: var(--color-surface-2);
   border-radius: 10px;
-}
-.unit-selected.active{
+} */
+
+.unit-selected.active {
   color: var(--color-accent);
-  transition: background 0.15s ease, border-color 0.15s ease;
 }
+
 /* ── Result ── */
 .result {
   display: flex;

@@ -3,10 +3,10 @@
   --color-brass: #c9a227;
   --color-accent: #c9a227;
   --color-accent-dim: #8a701c;
-  /* --color-accent-light: #e7bb2c; */
+  --color-chalk: #ece9e2;
+  --color-steel: #5b7a8c;
   --color-bg: #15161a;
   --color-deep-dark-blue: #15161a;
-  --color-steel: #5b7a8c;
   --color-surface: #1e2024;
   --color-surface-2: #26292e;
   --color-border: #34373d;
@@ -14,6 +14,7 @@
   --color-text-dim: #9a9ca3;
   --color-danger: #c1443c;
   --color-green: #4a9e6b;
+
 
   /* Type tokens */
   --font-display: "Oswald", sans-serif;
@@ -184,6 +185,15 @@ a:focus-visible {
 }
 .color-green {
   color: var(--color-green);
+}
+.bold {
+  font-weight: bold;
+}
+.bolder {
+  font-weight: bolder;
+}
+.larger {
+  font-size: larger;
 }
 /* ═══════════════════════════════════════════════════════════════════════════
     SHARED COMPONENT UTILITIES

@@ -124,7 +124,7 @@ const toggleUnits = () => {
 
     <section class="block">
       <div class="block-head">
-        <span class="eyebrow">On the bar</span>
+        <span class="eyebrow">On the bar &middot; {{ doubled ? 'both sides' : '1 side'}} </span>
         <div class="btn-group">
           <button class="btn btn-sm" :disabled="!sidePlates.length" @click="removeLast">Undo</button>
           <button class="btn btn-sm btn-danger" :disabled="!sidePlates.length && !doubled"

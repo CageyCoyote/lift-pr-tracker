@@ -71,6 +71,7 @@ const breakdown = computed(() =>
 )
 
 const toggleUnits = () => {
+  editingBar.value = false
   if (weightUnit.value === 'lbs') {
     weightUnit.value = 'kg'
     BAR_PRESETS.value = KG_BAR_PRESETS
@@ -92,13 +93,19 @@ const toggleUnits = () => {
     <button class="back-link" @click="router.back()">← Calculators</button>
     <header class="page-header">
       <h1>Plate Math</h1>
-      <!--             
-      <div class="unit-toggle" @click="toggleUnits">
-        <span class="unit-selected" :class="{active: weightUnit === 'lbs'}">Lbs</span>
-        <span class="seperator">|</span>
-        <span class="unit-selected" :class="{active: weightUnit === 'kg'}">Kg</span>
-      </div>
-      -->
+      <button
+        type="button"
+        class="unit-toggle"
+        :class="{ kg: weightUnit === 'kg' }"
+        role="switch"
+        :aria-checked="weightUnit === 'kg'"
+        aria-label="Use kilograms"
+        @click="toggleUnits"
+      >
+        <span class="unit-thumb" aria-hidden="true"></span>
+        <span class="unit-option" :class="{ active: weightUnit === 'lbs' }">Lbs</span>
+        <span class="unit-option" :class="{ active: weightUnit === 'kg' }">Kg</span>
+      </button>
     </header>
 
     <div class="result" aria-live="polite">
@@ -187,6 +194,10 @@ const toggleUnits = () => {
 }
 
 .page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
@@ -195,21 +206,48 @@ const toggleUnits = () => {
   margin-top: 2px;
 }
 
+/* ── Unit switch ── */
 .unit-toggle {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  align-items: center;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 96px;
+  flex-shrink: 0;
+  padding: 3px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  touch-action: manipulation;
 }
 
-/* .unit-selected {
-  background-color: var(--color-surface-2);
-  border-radius: 10px;
-} */
+.unit-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  background: var(--color-accent);
+  transition: transform 0.2s ease;
+}
 
-.unit-selected.active {
-  color: var(--color-accent);
+.unit-toggle.kg .unit-thumb {
+  transform: translateX(100%);
+}
+
+.unit-option {
+  position: relative;
+  padding: 5px 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-dim);
+  transition: color 0.2s ease;
+}
+
+.unit-option.active {
+  color: #1a1500;
 }
 
 /* ── Result ── */
